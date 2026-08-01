@@ -132,6 +132,13 @@
   .feat h4{font-size:15px; margin-bottom:5px; color:var(--neon)}
   .feat p{font-size:13px; color:var(--dim)}
 
+  /* 트레일러 */
+  .trailer{
+    max-width:880px; margin:0 auto; border:1px solid var(--line); border-radius:14px;
+    overflow:hidden; background:#000; box-shadow:0 0 40px rgba(94,242,199,.13);
+  }
+  .trailer video{display:block; width:100%; height:auto; aspect-ratio:16/9; background:#000}
+
   /* 조작법 */
   .keys{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px}
   .key{
@@ -189,6 +196,19 @@
     <p class="tagline">감염자 1인당 <strong>100억 원</strong>.<br>유튜버 김재원이 카메라 대신 주먹을 들고 감염 지역으로 뛰어든다.</p>
     <div class="fan-note">🎮 김재원 님께 바치는 팬게임입니다</div>
   </header>
+
+  <!-- 트레일러 -->
+  <section style="border-top:none; padding-top:8px">
+    <h2>트레일러</h2>
+    <p class="lead">실제 플레이 화면입니다. 스포일러는 빼두었으니 편하게 보셔도 됩니다.</p>
+    <div class="trailer">
+      <video controls playsinline preload="none" poster="trailer-poster.jpg">
+        <source src="trailer.mp4" type="video/mp4">
+        브라우저가 영상을 지원하지 않습니다. <a href="trailer.mp4">직접 받아서 보기</a>
+      </video>
+    </div>
+    <p class="meta" style="text-align:center; margin-top:12px">약 1분 40초 · 소리가 함께 나옵니다</p>
+  </section>
 
   <!-- 다운로드 -->
   <section style="border-top:none; padding-top:8px">
@@ -260,12 +280,12 @@
     <h2>조작법</h2>
     <p class="lead">키보드로 하시면 되고, 폰에서는 화면에 버튼이 나옵니다.</p>
     <div class="keys">
-      <div class="key"><span class="kbd">← →</span><span>좌우 이동</span></div>
+      <div class="key"><span class="kbd">A / D</span><span>좌우 이동 <small style="color:#6d6f88">(← → 도 됩니다)</small></span></div>
       <div class="key"><span class="kbd">Space</span><span>점프 <small style="color:#6d6f88">(1단)</small></span></div>
-      <div class="key"><span class="kbd">Shift</span><span>달리기</span></div>
-      <div class="key"><span class="kbd">Z / 클릭</span><span>근접 공격</span></div>
-      <div class="key"><span class="kbd">X</span><span>회피 · 대시</span></div>
-      <div class="key"><span class="kbd">ESC</span><span>일시정지</span></div>
+      <div class="key"><span class="kbd">Shift</span><span>달리기 <small style="color:#6d6f88">(누른 채 이동)</small></span></div>
+      <div class="key"><span class="kbd">마우스 우클릭</span><span>근접 공격 <small style="color:#6d6f88">(길게 누르면 연속 공격)</small></span></div>
+      <div class="key"><span class="kbd">마우스 좌클릭</span><span>방패 <small style="color:#6d6f88">(정면만 차단)</small></span></div>
+      <div class="key"><span class="kbd">마우스 휠 클릭</span><span>패링 <small style="color:#6d6f88">(방패를 든 채로)</small></span></div>
     </div>
     <div class="warn" style="margin-top:16px">
       ※ 실제 키 배치는 게임 내 <b>튜토리얼</b>에서 다시 안내되니, 첫 스테이지를 따라가시면 자연스럽게 익히실 수 있습니다.
