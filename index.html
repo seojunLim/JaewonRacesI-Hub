@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JaewonRaces I : Tail Virus</title>
+<meta name="description" content="유튜버 김재원 팬게임 — 2D 액션 플랫포머 'JaewonRaces I : Tail Virus'. 웹에서 바로 플레이하거나 Windows·Android 버전을 받아보세요.">
+<meta property="og:title" content="JaewonRaces I : Tail Virus">
+<meta property="og:description" content="감염자 1인당 100억. 유튜버 김재원이 직접 감염 지역으로 뛰어든다.">
+<meta property="og:image" content="icon.png">
+<meta property="og:type" content="website">
+<link rel="icon" href="icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Galmuri11:wght@400;700&family=Galmuri9&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07070d; --panel:#11121c; --line:#262840;
+    --neon:#5ef2c7; --neon2:#ff4f8b; --amber:#ffc857;
+    --text:#e8e9f5; --dim:#9a9cb8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Galmuri11','Malgun Gothic',sans-serif;
+    line-height:1.75; overflow-x:hidden;
+    image-rendering:pixelated;
+  }
+  /* 배경 그리드 + 스캔라인 */
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background:
+      radial-gradient(ellipse 80% 55% at 50% -10%, rgba(94,242,199,.13), transparent 60%),
+      radial-gradient(ellipse 60% 50% at 85% 15%, rgba(255,79,139,.09), transparent 60%),
+      linear-gradient(rgba(255,255,255,.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.022) 1px, transparent 1px);
+    background-size:auto,auto,44px 44px,44px 44px;
+  }
+  body::after{
+    content:''; position:fixed; inset:0; z-index:9999; pointer-events:none;
+    background:repeating-linear-gradient(transparent 0 2px, rgba(0,0,0,.16) 2px 4px);
+    opacity:.35; mix-blend-mode:multiply;
+  }
+  .wrap{position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:0 22px}
+
+  /* ===== HERO ===== */
+  header{text-align:center; padding:72px 0 54px}
+  .badge{
+    display:inline-block; font-family:'Galmuri9',monospace; font-size:12px;
+    letter-spacing:.16em; color:var(--neon);
+    border:1px solid rgba(94,242,199,.45); border-radius:999px;
+    padding:7px 18px; margin-bottom:26px; background:rgba(94,242,199,.07);
+  }
+  .icon-frame{
+    width:150px; height:150px; margin:0 auto 26px; position:relative;
+    animation:float 4.5s ease-in-out infinite;
+  }
+  .icon-frame img{
+    width:100%; height:100%; border-radius:50%;
+    border:3px solid var(--neon);
+    box-shadow:0 0 0 6px rgba(94,242,199,.10), 0 0 42px rgba(94,242,199,.42);
+  }
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}
+  h1{
+    font-size:clamp(30px,6.4vw,58px); font-weight:700; line-height:1.25;
+    letter-spacing:-.01em; margin-bottom:6px;
+    text-shadow:0 0 22px rgba(94,242,199,.5), 3px 3px 0 rgba(255,79,139,.30);
+  }
+  h1 .sub{
+    display:block; font-size:clamp(15px,2.9vw,25px); color:var(--neon2);
+    margin-top:10px; text-shadow:0 0 16px rgba(255,79,139,.5);
+  }
+  .tagline{color:var(--dim); font-size:15px; margin:20px auto 0; max-width:600px}
+  .fan-note{
+    display:inline-block; margin-top:20px; font-size:13px; color:var(--amber);
+    border-top:1px solid rgba(255,200,87,.25); border-bottom:1px solid rgba(255,200,87,.25);
+    padding:9px 20px;
+  }
+
+  /* ===== 다운로드 카드 ===== */
+  .cards{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:18px; margin:16px 0 26px;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:28px 24px; text-align:center; position:relative;
+    transition:transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  }
+  .card:hover{transform:translateY(-6px); border-color:var(--neon); box-shadow:0 14px 40px rgba(0,0,0,.55)}
+  .card.primary{border-color:rgba(94,242,199,.55); background:linear-gradient(180deg,rgba(94,242,199,.09),var(--panel))}
+  .tag{
+    position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    background:var(--neon); color:#06251c; font-size:11px; font-weight:700;
+    padding:4px 14px; border-radius:999px; letter-spacing:.06em; white-space:nowrap;
+  }
+  .card .ico{font-size:38px; margin-bottom:12px; line-height:1}
+  .card h3{font-size:19px; margin-bottom:6px}
+  .card p{font-size:13px; color:var(--dim); margin-bottom:20px; min-height:42px}
+  .btn{
+    display:inline-block; width:100%; padding:14px 10px; border-radius:9px;
+    font-family:'Galmuri11',sans-serif; font-size:15px; font-weight:700;
+    text-decoration:none; border:1px solid var(--line); color:var(--text);
+    background:#1b1d2c; transition:filter .2s ease, transform .12s ease;
+  }
+  .btn:hover{filter:brightness(1.3)}
+  .btn:active{transform:scale(.97)}
+  .btn.play{background:var(--neon); color:#06251c; border-color:var(--neon); box-shadow:0 0 26px rgba(94,242,199,.42)}
+  .btn.win{background:#2a3350; border-color:#3d4670}
+  .meta{margin-top:11px; font-size:11px; color:#6d6f88; font-family:'Galmuri9',monospace}
+
+  /* ===== 섹션 ===== */
+  section{padding:54px 0; border-top:1px solid var(--line)}
+  h2{
+    font-size:23px; margin-bottom:8px; color:var(--neon);
+    text-shadow:0 0 14px rgba(94,242,199,.34);
+  }
+  h2::before{content:'▍'; color:var(--neon2); margin-right:8px}
+  .lead{color:var(--dim); font-size:14px; margin-bottom:26px}
+  .story{
+    background:var(--panel); border-left:3px solid var(--neon2);
+    border-radius:0 12px 12px 0; padding:24px 26px; font-size:15px;
+  }
+  .story strong{color:var(--amber)}
+  .story .prize{
+    display:block; margin-top:14px; font-size:19px; color:var(--neon2);
+    font-weight:700; text-shadow:0 0 16px rgba(255,79,139,.45);
+  }
+
+  .grid3{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px}
+  .feat{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px}
+  .feat .fi{font-size:24px; margin-bottom:8px}
+  .feat h4{font-size:15px; margin-bottom:5px; color:var(--neon)}
+  .feat p{font-size:13px; color:var(--dim)}
+
+  /* 조작법 */
+  .keys{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px}
+  .key{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:15px; display:flex; align-items:center; gap:13px;
+  }
+  .kbd{
+    font-family:'Galmuri9',monospace; font-size:12px; background:#242639;
+    border:1px solid #3a3d58; border-bottom-width:3px; border-radius:6px;
+    padding:7px 11px; color:var(--neon); white-space:nowrap; flex-shrink:0;
+  }
+  .key span{font-size:14px}
+
+  /* 스테이지 */
+  .stages{display:grid; gap:10px}
+  .stage{
+    display:flex; align-items:center; gap:16px; background:var(--panel);
+    border:1px solid var(--line); border-left:3px solid var(--neon);
+    border-radius:0 10px 10px 0; padding:15px 18px;
+  }
+  .snum{
+    font-family:'Galmuri9',monospace; font-size:13px; color:var(--neon2);
+    font-weight:700; flex-shrink:0; min-width:58px;
+  }
+  .stage b{font-size:15px; display:block; margin-bottom:2px}
+  .stage small{font-size:12.5px; color:var(--dim)}
+  .locked{border-left-color:#3a3d58; opacity:.62}
+  .locked .snum{color:#6d6f88}
+
+  .warn{
+    background:rgba(255,200,87,.07); border:1px solid rgba(255,200,87,.3);
+    border-radius:10px; padding:16px 20px; font-size:13.5px; color:#f0dcae; margin-top:18px;
+  }
+  .warn b{color:var(--amber)}
+
+  footer{
+    text-align:center; padding:44px 0 56px; border-top:1px solid var(--line);
+    color:#6d6f88; font-size:12.5px;
+  }
+  footer .disc{max-width:620px; margin:14px auto 0; line-height:1.85}
+  @media(max-width:600px){
+    header{padding:48px 0 38px}
+    .card p{min-height:auto}
+    .stage{flex-direction:column; align-items:flex-start; gap:5px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="badge">FAN GAME · 김재원의 즐거운 세상</div>
+    <div class="icon-frame"><img src="icon.png" alt="JaewonRaces I 아이콘"></div>
+    <h1>JaewonRaces I<span class="sub">: Tail Virus</span></h1>
+    <p class="tagline">감염자 1인당 <strong>100억 원</strong>.<br>유튜버 김재원이 카메라 대신 주먹을 들고 감염 지역으로 뛰어든다.</p>
+    <div class="fan-note">🎮 김재원 님께 바치는 팬게임입니다</div>
+  </header>
+
+  <!-- 다운로드 -->
+  <section style="border-top:none; padding-top:8px">
+    <h2>지금 플레이하기</h2>
+    <p class="lead">설치 없이 브라우저에서 바로 즐기거나, 원하는 플랫폼으로 받아보세요.</p>
+    <div class="cards">
+
+      <div class="card primary">
+        <div class="tag">설치 필요 없음</div>
+        <div class="ico">🌐</div>
+        <h3>웹에서 바로 플레이</h3>
+        <p>브라우저만 있으면 끝. PC에서 클릭 한 번으로 시작됩니다.</p>
+        <a class="btn play" href="https://seojunlim.github.io/JaewonRaces-I-WebGL/" target="_blank" rel="noopener">▶ 바로 플레이</a>
+        <div class="meta">PC 브라우저 권장 · Chrome / Edge</div>
+      </div>
+
+      <div class="card">
+        <div class="ico">🪟</div>
+        <h3>Windows 버전</h3>
+        <p>가장 쾌적한 환경. 설치형이라 자동 업데이트까지 지원됩니다.</p>
+        <a class="btn win" href="https://github.com/seojunLim/JaewonRace-I/releases/latest" target="_blank" rel="noopener">⬇ 다운로드</a>
+        <div class="meta" id="win-meta">최신 버전 · GitHub Releases</div>
+      </div>
+
+      <div class="card">
+        <div class="ico">🤖</div>
+        <h3>Android 버전</h3>
+        <p>휴대폰에서도 플레이. APK를 직접 설치하는 방식입니다.</p>
+        <a class="btn" href="https://github.com/seojunLim/JaewonRace-I/releases/latest" target="_blank" rel="noopener">⬇ APK 다운로드</a>
+        <div class="meta" id="apk-meta">최신 버전 · GitHub Releases</div>
+      </div>
+
+    </div>
+    <div class="warn">
+      <b>설치 안내</b> — Windows는 알려지지 않은 개발자라 <b>"Windows의 PC 보호"</b> 창이 뜰 수 있습니다.
+      <b>추가 정보 → 실행</b>을 누르면 정상 설치됩니다. Android는 <b>"출처를 알 수 없는 앱"</b> 설치를 허용해 주세요.
+      개인이 만든 팬게임이라 별도 서명이 없어 생기는 안내이며, 광고·결제·수집 요소는 전혀 없습니다.
+    </div>
+  </section>
+
+  <!-- 스토리 -->
+  <section>
+    <h2>이런 이야기입니다</h2>
+    <div class="story">
+      전역 직후의 유튜버 <strong>김재원</strong>. 평화도 잠시, 전 세계에
+      <strong>Tail Virus</strong>라는 신종 바이러스가 퍼진다.
+      감염자는 독성 꼬리가 달린 괴물로 변이하고, 정부는 다급히 포상금을 내건다.
+      <span class="prize">감염자 1인당 — 100억 원</span>
+      그 소식을 들은 김재원은, 카메라를 내려놓고 직접 감염 지역으로 뛰어든다.
+    </div>
+  </section>
+
+  <!-- 특징 -->
+  <section>
+    <h2>게임 특징</h2>
+    <p class="lead">약 30~50분 분량의 2D 액션 플랫포머입니다.</p>
+    <div class="grid3">
+      <div class="feat"><div class="fi">🏃</div><h4>스태미나 액션</h4><p>달리기·점프·공격이 스태미나를 소모합니다. 멈추면 차오르니 완급 조절이 핵심입니다.</p></div>
+      <div class="feat"><div class="fi">🧩</div><h4>발판 기믹</h4><p>움직이는 발판, 무너지는 낙하 함정, 점멸하는 투명 발판까지 단계별로 등장합니다.</p></div>
+      <div class="feat"><div class="fi">⚔️</div><h4>감염자 사냥</h4><p>근접 전투로 감염자를 처치하고, 중간에는 강력한 보스도 기다리고 있습니다.</p></div>
+      <div class="feat"><div class="fi">🎚️</div><h4>3단계 난이도</h4><p>Normal · Hard · Master. 실력에 맞춰 고르거나, 클리어 후 더 높은 난이도에 도전할 수 있습니다.</p></div>
+      <div class="feat"><div class="fi">💾</div><h4>이어하기 지원</h4><p>진행 상황이 저장되어 언제든 껐다 켜도 그 지점부터 이어서 플레이할 수 있습니다.</p></div>
+      <div class="feat"><div class="fi">🎬</div><h4>연출과 컷씬</h4><p>인트로 컷씬과 스토리 연출이 들어가 있습니다. 끝까지 플레이해 주세요!</p></div>
+    </div>
+  </section>
+
+  <!-- 조작법 -->
+  <section>
+    <h2>조작법</h2>
+    <p class="lead">키보드로 플레이합니다. 모바일은 화면 터치 버튼을 지원합니다.</p>
+    <div class="keys">
+      <div class="key"><span class="kbd">← →</span><span>좌우 이동</span></div>
+      <div class="key"><span class="kbd">Space</span><span>점프 <small style="color:#6d6f88">(1단)</small></span></div>
+      <div class="key"><span class="kbd">Shift</span><span>달리기</span></div>
+      <div class="key"><span class="kbd">Z / 클릭</span><span>근접 공격</span></div>
+      <div class="key"><span class="kbd">X</span><span>회피 · 대시</span></div>
+      <div class="key"><span class="kbd">ESC</span><span>일시정지</span></div>
+    </div>
+    <div class="warn" style="margin-top:16px">
+      ※ 실제 키 배치는 게임 내 <b>튜토리얼</b>에서 다시 안내되니, 첫 스테이지를 따라가시면 자연스럽게 익히실 수 있습니다.
+    </div>
+  </section>
+
+  <!-- 스테이지 -->
+  <section>
+    <h2>스테이지</h2>
+    <p class="lead">도심 초입에서 시작해 점점 위험한 곳으로 향합니다.</p>
+    <div class="stages">
+      <div class="stage"><span class="snum">STAGE 1</span><div><b>도심 초입</b><small>감염 확산 초기. 기본 조작을 익히는 구간입니다.</small></div></div>
+      <div class="stage"><span class="snum">STAGE 2</span><div><b>감염 지역 심화</b><small>움직이는 발판이 등장하고 감염자 수가 늘어납니다.</small></div></div>
+      <div class="stage"><span class="snum">STAGE 3</span><div><b>폐허 · 지하 구간</b><small>낙하 함정 발판, 그리고 첫 보스와의 전투.</small></div></div>
+      <div class="stage"><span class="snum">STAGE 4</span><div><b>감염 확산 최전선</b><small>투명 발판이 처음 등장하며 난이도가 크게 오릅니다.</small></div></div>
+      <div class="stage"><span class="snum">STAGE 5</span><div><b>정부 통제구역</b><small>모든 기믹이 복합된 최고 난이도 구간. 근원지에 다가섭니다.</small></div></div>
+      <div class="stage locked"><span class="snum">? ? ?</span><div><b>???</b><small>직접 끝까지 플레이해서 확인해 주세요.</small></div></div>
+    </div>
+  </section>
+
+  <footer>
+    <div style="color:var(--neon); font-size:14px; margin-bottom:4px">JaewonRaces I : Tail Virus</div>
+    <div>Developed by <strong style="color:var(--amber)">SJL Studio</strong></div>
+    <p class="disc">
+      본 게임은 유튜버 <strong style="color:var(--text)">김재원(김재원의 즐거운 세상)</strong> 님을 향한 애정으로 제작된
+      <strong style="color:var(--text)">비상업 팬게임</strong>입니다.<br>
+      어떠한 수익도 발생하지 않으며, 광고·결제·개인정보 수집 요소가 없습니다.<br>
+      원저작자 및 권리자의 요청이 있을 경우 즉시 배포를 중단합니다.
+    </p>
+  </footer>
+
+</div>
+
+<script>
+// GitHub 최신 릴리즈에서 버전/용량을 가져와 표시 (실패해도 기본 문구 유지)
+(function(){
+  var API='https://api.github.com/repos/seojunLim/JaewonRace-I/releases/latest';
+  function mb(b){return (b/1048576).toFixed(0)+'MB';}
+  fetch(API).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(d){
+    var tag=d.tag_name||'';
+    (d.assets||[]).forEach(function(a){
+      var el=null;
+      if(/\.exe$/i.test(a.name)||/\.zip$/i.test(a.name)) el=document.getElementById('win-meta');
+      else if(/\.apk$/i.test(a.name)) el=document.getElementById('apk-meta');
+      if(el) el.textContent=tag+' · '+mb(a.size);
+    });
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
