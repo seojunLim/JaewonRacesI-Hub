@@ -229,8 +229,8 @@
         <div class="ico">🪟</div>
         <h3>Windows 버전</h3>
         <p>제일 매끄럽게 돌아갑니다. 새 버전 나오면 게임 안에서 알아서 업데이트됩니다.</p>
-        <a class="btn win" href="https://github.com/seojunLim/JaewonRace-I/releases/latest" target="_blank" rel="noopener">⬇ 다운로드</a>
-        <div class="meta" id="win-meta">최신 버전 · GitHub Releases</div>
+        <a class="btn win" href="https://www.dropbox.com/scl/fi/1mkmnpvmc30p8fyz20kus/JaewonRacesI_Setup.exe?rlkey=c25hoisortrzdrranztm0bbuc&amp;st=mio7wpas&amp;dl=1">⬇ 다운로드</a>
+        <div class="meta" id="win-meta">설치 프로그램 · 108MB</div>
       </div>
 
       <div class="card">
@@ -327,9 +327,9 @@
   fetch(API).then(function(r){return r.ok?r.json():Promise.reject();}).then(function(d){
     var tag=d.tag_name||'';
     (d.assets||[]).forEach(function(a){
+      // Windows 설치 파일은 Dropbox에서 직접 받으므로 win-meta는 건드리지 않는다
       var el=null;
-      if(/\.exe$/i.test(a.name)||/\.zip$/i.test(a.name)) el=document.getElementById('win-meta');
-      else if(/\.apk$/i.test(a.name)) el=document.getElementById('apk-meta');
+      if(/\.apk$/i.test(a.name)) el=document.getElementById('apk-meta');
       if(el) el.textContent=tag+' · '+mb(a.size);
     });
   }).catch(function(){});
