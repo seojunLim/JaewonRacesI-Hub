@@ -1,0 +1,165 @@
+{
+  "$schema": "../schemas/scene.schema.json",
+  "name": "c5-phase",
+  "settings": {
+    "gravity3d": [0, -24, 0],
+    "seed": "aether-c5",
+    "physics3d": { "iterations": 12 },
+    "skybox": { "top": "#2a1f4e", "bottom": "#05070f", "horizon": 0.44 }
+  },
+
+  "prefabs": {
+    "Rock": {
+      "name": "바위",
+      "tags": ["law"],
+      "components": {
+        "Transform3D": {},
+        "MeshRenderer": { "mesh": "sphere", "size": [1.1, 1.1, 1.1], "color": "#aab4d6" },
+        "Rigidbody3D": { "type": "dynamic", "mass": 6, "linearDamping": 0.08 },
+        "SphereCollider": { "radius": 0.55, "friction": 0.08, "restitution": 0.1 },
+        "LawTarget": { "label": "바위", "kind": "rock" }
+      }
+    }
+  },
+
+  "entities": [
+    { "id": "manager", "name": "Chamber",
+      "components": { "Transform3D": {} },
+      "behaviors": [
+        { "type": "LawWorld" },
+        { "type": "Chamber",
+          "title": "신규 능력 · 사라지는 것들",
+          "objective": "밀폐된 방 안의 압력판을 눌러라. 당신은 그 안에 들어갈 수 없다.",
+          "test": "검증 3·4 — 3계열 조합 / 실험적 해결",
+          "abilities": "weight,phase,inertia",
+          "hint1": "위상화 Z+E+좌클릭 · 위상 고정 Z+E+우클릭. 위상화된 것은 벽을 통과한다.",
+          "hint2": "위상화된 물체는 만질 수 없다 — 밀 수 없다는 뜻이다. 먼저 움직임을 줘야 한다.",
+          "hint3": "방향 변경(Z+R+우클릭)은 멈춘 물체도 밀어낸다. 통과시킨 뒤 무겁게 만들면?",
+          "next": "c6-combat" }
+      ] },
+
+    { "id": "camera", "name": "Camera",
+      "components": {
+        "Transform3D": { "position": [0, 9, 22] },
+        "Camera3D": { "fov": 58, "far": 320, "background": "#05070f", "fogDensity": 0.0072, "fogColor": "#120b22" }
+      },
+      "behaviors": [ { "type": "LawCamera", "target": "player", "distance": 13, "pitch": 26 } ] },
+
+    { "id": "sun", "components": { "Transform3D": { "rotation": [-50, 24, 0] },
+        "Light": { "type": "directional", "color": "#e6d8ff", "intensity": 0.9 } } },
+    { "id": "fill", "components": { "Transform3D": {},
+        "Light": { "type": "ambient", "color": "#8d80c8", "intensity": 0.44 } } },
+
+    { "id": "player", "name": "여행자", "tags": ["player"],
+      "components": {
+        "Transform3D": { "position": [0, 1.6, 14] },
+        "MeshRenderer": { "mesh": "box", "size": [0.8, 1.7, 0.8], "color": "#d3e3ff", "emissive": 0.12 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 3 },
+        "BoxCollider3D": { "size": [0.8, 1.7, 0.8], "friction": 0.08 },
+        "LawTarget": { "label": "여행자", "kind": "player", "grabbable": false }
+      },
+      "behaviors": [ { "type": "AetherPlayer" }, { "type": "LawDevice" } ] },
+
+    { "id": "floor", "name": "회랑", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [0, -0.5, -6] },
+        "MeshRenderer": { "mesh": "box", "size": [30, 1, 60], "color": "#474b7d" },
+        "BoxCollider3D": { "size": [30, 1, 60], "friction": 0.55 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "wall-l", "components": {
+        "Transform3D": { "position": [-15.5, 3, -6] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 10, 60], "color": "#3b3866" },
+        "BoxCollider3D": { "size": [1, 10, 60] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "wall-r", "components": {
+        "Transform3D": { "position": [15.5, 3, -6] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 10, 60], "color": "#3b3866" },
+        "BoxCollider3D": { "size": [1, 10, 60] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "crusher", "name": "진동 구조물", "tags": ["law"],
+      "components": {
+        "Transform3D": { "position": [0, 2.4, 4] },
+        "MeshRenderer": { "mesh": "box", "size": [9, 4.8, 2], "color": "#6e6183", "shininess": 0.3 },
+        "BoxCollider3D": { "size": [9, 4.8, 2] },
+        "Rigidbody3D": { "type": "kinematic" },
+        "LawTarget": { "label": "진동 구조물", "kind": "structure" }
+      },
+      "behaviors": [ { "type": "Patrol3D", "axis": "x", "distance": 5.5, "speed": 3.4 } ] },
+    { "id": "crusher-gap-l", "components": {
+        "Transform3D": { "position": [-12.5, 2.4, 4] },
+        "MeshRenderer": { "mesh": "box", "size": [5, 4.8, 2], "color": "#403d75" },
+        "BoxCollider3D": { "size": [5, 4.8, 2] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "crusher-gap-r", "components": {
+        "Transform3D": { "position": [12.5, 2.4, 4] },
+        "MeshRenderer": { "mesh": "box", "size": [5, 4.8, 2], "color": "#403d75" },
+        "BoxCollider3D": { "size": [5, 4.8, 2] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "vault-l", "name": "밀폐실", "components": {
+        "Transform3D": { "position": [-4.6, 2.5, -14] },
+        "MeshRenderer": { "mesh": "box", "size": [0.8, 5, 10], "color": "#5b5386" },
+        "BoxCollider3D": { "size": [0.8, 5, 10] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "vault-r", "name": "밀폐실", "components": {
+        "Transform3D": { "position": [4.6, 2.5, -14] },
+        "MeshRenderer": { "mesh": "box", "size": [0.8, 5, 10], "color": "#5b5386" },
+        "BoxCollider3D": { "size": [0.8, 5, 10] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "vault-front", "name": "밀폐실", "components": {
+        "Transform3D": { "position": [0, 2.5, -9.4] },
+        "MeshRenderer": { "mesh": "box", "size": [10, 5, 0.8], "color": "#5b5386" },
+        "BoxCollider3D": { "size": [10, 5, 0.8] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "vault-back", "name": "밀폐실", "components": {
+        "Transform3D": { "position": [0, 2.5, -18.6] },
+        "MeshRenderer": { "mesh": "box", "size": [10, 5, 0.8], "color": "#5b5386" },
+        "BoxCollider3D": { "size": [10, 5, 0.8] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "vault-top", "name": "밀폐실", "components": {
+        "Transform3D": { "position": [0, 5.4, -14] },
+        "MeshRenderer": { "mesh": "box", "size": [10, 0.8, 10], "color": "#6a6094", "opacity": 0.92 },
+        "BoxCollider3D": { "size": [10, 0.8, 10] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "plate", "name": "압력판",
+      "components": {
+        "Transform3D": { "position": [0, 0.12, -14] },
+        "MeshRenderer": { "mesh": "box", "size": [7, 0.25, 7], "color": "#6d7ba6", "emissive": 0.14 },
+        "BoxCollider3D": { "size": [7, 0.25, 7] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [ { "type": "PressurePlate", "need": 40, "target": "gate", "radius": 4.2 } ] },
+
+    { "id": "gate", "name": "문",
+      "components": {
+        "Transform3D": { "position": [10, 2.5, -22] },
+        "MeshRenderer": { "mesh": "box", "size": [5, 5, 1], "color": "#6d7aac", "shininess": 0.4 },
+        "BoxCollider3D": { "size": [5, 5, 1] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [ { "type": "SlideDoor", "openOffset": [0, 5.4, 0], "speed": 0.9 } ] },
+    { "id": "gate-wall-a", "components": {
+        "Transform3D": { "position": [-4, 2.5, -22] },
+        "MeshRenderer": { "mesh": "box", "size": [23, 5, 1], "color": "#403d75" },
+        "BoxCollider3D": { "size": [23, 5, 1] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "gate-wall-b", "components": {
+        "Transform3D": { "position": [13.8, 2.5, -22] },
+        "MeshRenderer": { "mesh": "box", "size": [2.4, 5, 1], "color": "#403d75" },
+        "BoxCollider3D": { "size": [2.4, 5, 1] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "prefab": "Rock", "id": "rock-1", "components": { "Transform3D": { "position": [-2, 1.2, -2] } } },
+    { "prefab": "Rock", "id": "rock-2", "components": { "Transform3D": { "position": [2, 1.2, -2] } } },
+    { "prefab": "Rock", "id": "rock-3", "components": { "Transform3D": { "position": [0, 1.2, 10] } } },
+
+    { "id": "crate", "name": "상자", "tags": ["law"],
+      "components": {
+        "Transform3D": { "position": [-8, 1, -2] },
+        "MeshRenderer": { "mesh": "box", "size": [1.8, 1.8, 1.8], "color": "#b39468" },
+        "Rigidbody3D": { "type": "dynamic", "mass": 12 },
+        "BoxCollider3D": { "size": [1.8, 1.8, 1.8], "friction": 0.5 },
+        "LawTarget": { "label": "상자", "kind": "crate" }
+      } },
+
+    { "id": "goal", "name": "출구",
+      "components": {
+        "Transform3D": { "position": [10, 1.4, -28] },
+        "MeshRenderer": { "mesh": "box", "size": [3, 3, 0.4], "color": "#7dffb0", "emissive": 0.75, "opacity": 0.55 },
+        "SphereCollider": { "radius": 1.6, "isTrigger": true }
+      },
+      "behaviors": [ { "type": "ChamberGoal", "radius": 2.2 } ] }
+  ]
+}

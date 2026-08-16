@@ -1,0 +1,47 @@
+{
+  "name": "sjl-engine",
+  "version": "0.1.0",
+  "description": "An AI-native 2D game engine. Unity/Unreal-style features (ECS, scenes, prefabs, physics, animation, input maps, editor) in zero-dependency ESM that runs headless in Node and rendered in the browser.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./headless": "./src/runtime/headless.js",
+    "./browser": "./src/runtime/browser.js",
+    "./math": "./src/math/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "sjl": "./src/cli/sjl.js"
+  },
+  "files": [
+    "src",
+    "schemas",
+    "docs",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "describe": "node src/cli/sjl.js describe",
+    "validate": "node src/cli/sjl.js validate",
+    "schema": "node src/cli/sjl.js schema --out schemas",
+    "dev": "node src/cli/sjl.js dev --root examples/space-shooter"
+  },
+  "keywords": [
+    "game-engine",
+    "ecs",
+    "2d",
+    "webgl",
+    "headless",
+    "deterministic",
+    "ai-agents",
+    "llm"
+  ],
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,160 @@
+{
+  "$schema": "../schemas/scene.schema.json",
+  "name": "c3-inertia",
+  "settings": {
+    "gravity3d": [0, -24, 0],
+    "seed": "aether-c3",
+    "physics3d": { "iterations": 12 },
+    "skybox": { "top": "#1d2f4e", "bottom": "#05070f", "horizon": 0.44 }
+  },
+
+  "prefabs": {
+    "Rock": {
+      "name": "바위",
+      "tags": ["law"],
+      "components": {
+        "Transform3D": {},
+        "MeshRenderer": { "mesh": "sphere", "size": [1.1, 1.1, 1.1], "color": "#aab4d6" },
+        "Rigidbody3D": { "type": "dynamic", "mass": 6, "linearDamping": 0.1 },
+        "SphereCollider": { "radius": 0.55, "friction": 0.15, "restitution": 0.1 },
+        "LawTarget": { "label": "바위", "kind": "rock" }
+      }
+    },
+    "Boulder": {
+      "name": "큰 바위",
+      "tags": ["law"],
+      "components": {
+        "Transform3D": {},
+        "MeshRenderer": { "mesh": "sphere", "size": [2.2, 2.2, 2.2], "color": "#9aa3c9" },
+        "Rigidbody3D": { "type": "dynamic", "mass": 40, "linearDamping": 0.01 },
+        "SphereCollider": { "radius": 1.1, "friction": 0.01, "restitution": 0.06 },
+        "LawTarget": { "label": "큰 바위", "kind": "boulder" }
+      }
+    }
+  },
+
+  "entities": [
+    { "id": "manager", "name": "Chamber",
+      "components": { "Transform3D": {} },
+      "behaviors": [
+        { "type": "LawWorld" },
+        { "type": "Chamber",
+          "title": "검증 2 · 구르는 것들",
+          "objective": "강화벽을 부수고 나아가라. 이 방에서 쓸 수 있는 법칙은 관성뿐이다.",
+          "test": "검증 2 — 관성 능력만으로 재미있는가",
+          "abilities": "inertia",
+          "hint1": "관성 증폭 Z+R+좌클릭 · 방향 변경 Z+R+우클릭 · 관성 저장/방출 Z+R+E",
+          "hint2": "증폭은 이미 움직이는 것에만 걸린다. 사출기가 계속 큰 바위를 쏘아 보낸다.",
+          "hint3": "멈춘 물체도 방향 변경으로는 밀어낼 수 있다. 좌클릭으로 차 볼 수도 있다.",
+          "next": "c4-combination" }
+      ] },
+
+    { "id": "camera", "name": "Camera",
+      "components": {
+        "Transform3D": { "position": [0, 9, 22] },
+        "Camera3D": { "fov": 58, "far": 320, "background": "#05070f", "fogDensity": 0.0072, "fogColor": "#0b1122" }
+      },
+      "behaviors": [ { "type": "LawCamera", "target": "player", "distance": 13, "pitch": 26 } ] },
+
+    { "id": "sun", "components": { "Transform3D": { "rotation": [-50, 20, 0] },
+        "Light": { "type": "directional", "color": "#ffe9c8", "intensity": 1.35 } } },
+    { "id": "fill", "components": { "Transform3D": {},
+        "Light": { "type": "ambient", "color": "#7d94d6", "intensity": 0.44 } } },
+
+    { "id": "player", "name": "여행자", "tags": ["player"],
+      "components": {
+        "Transform3D": { "position": [-6, 1.6, 14] },
+        "MeshRenderer": { "mesh": "box", "size": [0.8, 1.7, 0.8], "color": "#d3e3ff", "emissive": 0.12 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 3 },
+        "BoxCollider3D": { "size": [0.8, 1.7, 0.8], "friction": 0.08 },
+        "LawTarget": { "label": "여행자", "kind": "player", "grabbable": false }
+      },
+      "behaviors": [ { "type": "AetherPlayer" }, { "type": "LawDevice" } ] },
+
+    { "id": "floor", "name": "회랑", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [0, -0.5, -6] },
+        "MeshRenderer": { "mesh": "box", "size": [26, 1, 66], "color": "#3f4870" },
+        "BoxCollider3D": { "size": [26, 1, 66], "friction": 0.55 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "wall-l", "components": {
+        "Transform3D": { "position": [-13.5, 3, -6] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 10, 66], "color": "#2f3760" },
+        "BoxCollider3D": { "size": [1, 10, 66] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "wall-r", "components": {
+        "Transform3D": { "position": [13.5, 3, -6] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 10, 66], "color": "#2f3760" },
+        "BoxCollider3D": { "size": [1, 10, 66] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "wall-back", "components": {
+        "Transform3D": { "position": [0, 3, 27] },
+        "MeshRenderer": { "mesh": "box", "size": [26, 10, 1], "color": "#2f3760" },
+        "BoxCollider3D": { "size": [26, 10, 1] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "launcher", "name": "고대 사출기",
+      "components": {
+        "Transform3D": { "position": [6, 1.4, 18] },
+        "MeshRenderer": { "mesh": "cylinder", "size": [2.6, 2.8, 2.6], "color": "#6e6183", "emissive": 0.1 },
+        "BoxCollider3D": { "size": [2.6, 2.8, 2.6] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [
+        { "type": "Launcher", "prefab": "Boulder", "interval": 4.5, "speed": 20,
+          "direction": [0, 0, -1], "offset": [0, 0.2, -2.6], "maxAlive": 2 }
+      ] },
+    { "id": "launcher-mark", "name": "사출 경로",
+      "components": {
+        "Transform3D": { "position": [6, 0.06, 0] },
+        "MeshRenderer": { "mesh": "box", "size": [2.6, 0.08, 34], "color": "#4be3ff", "emissive": 0.35, "opacity": 0.16 }
+      } },
+
+    { "id": "hardwall", "name": "강화벽",
+      "components": {
+        "Transform3D": { "position": [6, 2, -10] },
+        "MeshRenderer": { "mesh": "box", "size": [7, 4, 1.6], "color": "#6f78a5", "shininess": 0.35 },
+        "BoxCollider3D": { "size": [7, 4, 1.6] },
+        "Rigidbody3D": { "type": "static" },
+        "Breakable": { "threshold": 1200, "label": "강화벽" }
+      },
+      "behaviors": [ { "type": "BreakableWall" } ] },
+
+    { "id": "block-l", "components": {
+        "Transform3D": { "position": [-4.5, 2, -10] },
+        "MeshRenderer": { "mesh": "box", "size": [14, 4, 1.6], "color": "#414b76" },
+        "BoxCollider3D": { "size": [14, 4, 1.6] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "block-top", "components": {
+        "Transform3D": { "position": [6, 6.5, -10] },
+        "MeshRenderer": { "mesh": "box", "size": [7, 5, 1.6], "color": "#414b76" },
+        "BoxCollider3D": { "size": [7, 5, 1.6] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "block-r", "components": {
+        "Transform3D": { "position": [11.5, 2, -10] },
+        "MeshRenderer": { "mesh": "box", "size": [4, 4, 1.6], "color": "#414b76" },
+        "BoxCollider3D": { "size": [4, 4, 1.6] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "crystal", "name": "결정체",
+      "components": {
+        "Transform3D": { "position": [-8, 5.5, -10] },
+        "MeshRenderer": { "mesh": "sphere", "size": [1.6, 1.6, 1.6], "color": "#8ef0ff", "emissive": 0.6, "opacity": 0.8 },
+        "SphereCollider": { "radius": 0.8 },
+        "Rigidbody3D": { "type": "static" },
+        "Breakable": { "threshold": 60, "label": "결정체" }
+      },
+      "behaviors": [ { "type": "BreakableWall" } ] },
+    { "id": "crystal-stand", "components": {
+        "Transform3D": { "position": [-8, 2.2, -10] },
+        "MeshRenderer": { "mesh": "cylinder", "size": [0.6, 6, 0.6], "color": "#59628c" },
+        "BoxCollider3D": { "size": [0.6, 6, 0.6] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "prefab": "Rock", "id": "rock-1", "components": { "Transform3D": { "position": [-6, 1.2, 6] } } },
+    { "prefab": "Rock", "id": "rock-2", "components": { "Transform3D": { "position": [-4, 1.2, 4] } } },
+    { "prefab": "Rock", "id": "rock-3", "components": { "Transform3D": { "position": [-8, 1.2, 2] } } },
+
+    { "id": "goal", "name": "출구",
+      "components": {
+        "Transform3D": { "position": [6, 1.4, -30] },
+        "MeshRenderer": { "mesh": "box", "size": [3, 3, 0.4], "color": "#7dffb0", "emissive": 0.75, "opacity": 0.55 },
+        "SphereCollider": { "radius": 1.6, "isTrigger": true }
+      },
+      "behaviors": [ { "type": "ChamberGoal", "radius": 2.2 } ] }
+  ]
+}

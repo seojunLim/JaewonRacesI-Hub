@@ -1,0 +1,173 @@
+{
+  "$schema": "../schemas/scene.schema.json",
+  "name": "c1-awakening",
+  "settings": {
+    "gravity3d": [0, -24, 0],
+    "seed": "aether-c1",
+    "physics3d": { "iterations": 12 },
+    "skybox": { "top": "#1b2a55", "bottom": "#05070f", "horizon": 0.42 }
+  },
+
+  "prefabs": {
+    "Rock": {
+      "name": "바위",
+      "tags": ["law"],
+      "components": {
+        "Transform3D": {},
+        "MeshRenderer": { "mesh": "sphere", "size": [1.1, 1.1, 1.1], "color": "#aab4d6", "shininess": 0.15 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 6, "linearDamping": 0.12 },
+        "SphereCollider": { "radius": 0.55, "friction": 0.25, "restitution": 0.12 },
+        "LawTarget": { "label": "바위", "kind": "rock" }
+      }
+    }
+  },
+
+  "entities": [
+    { "id": "manager", "name": "Chamber",
+      "components": { "Transform3D": {} },
+      "behaviors": [
+        { "type": "LawWorld" },
+        { "type": "Chamber",
+          "title": "1장 · 깨어남",
+          "objective": "떠 있는 바위를 떨어뜨려 압력판을 누르고 문을 열어라.",
+          "test": "검증 5 — 능력 발동 순간의 타격감",
+          "abilities": "weight",
+          "hint1": "WASD 이동 · Space 점프 · Shift 회피 · 좌클릭 공격 · 방향키로 카메라",
+          "hint2": "Z 를 누르고 있으면 세계가 느려진다. Q(무게)를 고르고, 커서로 조준해 좌클릭.",
+          "hint3": "무거워진 것은 떨어진다. 저 바위는 압력판 위에 떠 있다.",
+          "next": "c2-weight" }
+      ] },
+
+    { "id": "camera", "name": "Camera",
+      "components": {
+        "Transform3D": { "position": [0, 9, 22] },
+        "Camera3D": { "fov": 58, "near": 0.1, "far": 320, "background": "#05070f", "fogDensity": 0.0075, "fogColor": "#0b1122" }
+      },
+      "behaviors": [ { "type": "LawCamera", "target": "player", "distance": 11, "pitch": 22 } ] },
+
+    { "id": "sun", "name": "Sun",
+      "components": {
+        "Transform3D": { "rotation": [-52, 28, 0] },
+        "Light": { "type": "directional", "color": "#ffe9c8", "intensity": 1.35 }
+      } },
+    { "id": "fill", "name": "Fill",
+      "components": {
+        "Transform3D": {},
+        "Light": { "type": "ambient", "color": "#7d94d6", "intensity": 0.44 }
+      } },
+
+    { "id": "player", "name": "여행자", "tags": ["player"],
+      "components": {
+        "Transform3D": { "position": [0, 1.6, 12] },
+        "MeshRenderer": { "mesh": "box", "size": [0.8, 1.7, 0.8], "color": "#d3e3ff", "emissive": 0.12, "shininess": 0.35 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 3, "linearDamping": 0 },
+        "BoxCollider3D": { "size": [0.8, 1.7, 0.8], "friction": 0.08 },
+        "LawTarget": { "label": "여행자", "kind": "player", "grabbable": false }
+      },
+      "behaviors": [
+        { "type": "AetherPlayer" },
+        { "type": "LawDevice" }
+      ] },
+
+    { "id": "ground-a", "name": "폐허 바닥", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [0, -0.5, 8] },
+        "MeshRenderer": { "mesh": "box", "size": [22, 1, 22], "color": "#3f4870" },
+        "BoxCollider3D": { "size": [22, 1, 22], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "ground-b", "name": "폐허 안쪽", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [0, -0.5, -22] },
+        "MeshRenderer": { "mesh": "box", "size": [22, 1, 34], "color": "#3f4870" },
+        "BoxCollider3D": { "size": [22, 1, 34], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+
+    { "id": "wall-l", "name": "무너진 벽",
+      "components": {
+        "Transform3D": { "position": [-11.5, 2, -8] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 6, 56], "color": "#2f3760" },
+        "BoxCollider3D": { "size": [1, 6, 56] },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "wall-r", "name": "무너진 벽",
+      "components": {
+        "Transform3D": { "position": [11.5, 2, -8] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 6, 56], "color": "#2f3760" },
+        "BoxCollider3D": { "size": [1, 6, 56] },
+        "Rigidbody3D": { "type": "static" }
+      } },
+
+    { "id": "pillar-a", "name": "기둥",
+      "components": {
+        "Transform3D": { "position": [-6, 2, 2] },
+        "MeshRenderer": { "mesh": "cylinder", "size": [1.6, 5, 1.6], "color": "#59628c" },
+        "BoxCollider3D": { "size": [1.5, 5, 1.5] },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "pillar-b", "name": "기둥",
+      "components": {
+        "Transform3D": { "position": [7, 1.4, -2] },
+        "MeshRenderer": { "mesh": "cylinder", "size": [1.6, 3.8, 1.6], "color": "#59628c" },
+        "BoxCollider3D": { "size": [1.5, 3.8, 1.5] },
+        "Rigidbody3D": { "type": "static" }
+      } },
+
+    { "id": "anomaly", "name": "떠 있는 바위", "tags": ["law", "anomaly"],
+      "components": {
+        "Transform3D": { "position": [4, 4.2, -14] },
+        "MeshRenderer": { "mesh": "sphere", "size": [1.6, 1.6, 1.6], "color": "#a9b3d8", "emissive": 0.08 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 6, "gravityScale": 0 },
+        "SphereCollider": { "radius": 0.8, "friction": 0.3 },
+        "LawTarget": { "label": "떠 있는 바위", "kind": "rock" }
+      },
+      "behaviors": [ { "type": "Anomaly", "bob": 0.3 } ] },
+
+    { "id": "plate", "name": "압력판",
+      "components": {
+        "Transform3D": { "position": [4, 0.12, -14] },
+        "MeshRenderer": { "mesh": "box", "size": [3.2, 0.25, 3.2], "color": "#6d7ba6", "emissive": 0.12 },
+        "BoxCollider3D": { "size": [3.2, 0.25, 3.2] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [ { "type": "PressurePlate", "need": 30, "target": "gate", "radius": 2 } ] },
+
+    { "id": "gate", "name": "문",
+      "components": {
+        "Transform3D": { "position": [0, 2.5, -30] },
+        "MeshRenderer": { "mesh": "box", "size": [7, 5, 0.8], "color": "#6d7aac", "shininess": 0.4 },
+        "BoxCollider3D": { "size": [7, 5, 0.8] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [ { "type": "SlideDoor", "openOffset": [0, 5.4, 0], "speed": 0.9 } ] },
+
+    { "id": "gate-l", "name": "문틀",
+      "components": {
+        "Transform3D": { "position": [-8, 2.5, -30] },
+        "MeshRenderer": { "mesh": "box", "size": [9, 5, 1.2], "color": "#414b76" },
+        "BoxCollider3D": { "size": [9, 5, 1.2] },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "gate-r", "name": "문틀",
+      "components": {
+        "Transform3D": { "position": [8, 2.5, -30] },
+        "MeshRenderer": { "mesh": "box", "size": [9, 5, 1.2], "color": "#414b76" },
+        "BoxCollider3D": { "size": [9, 5, 1.2] },
+        "Rigidbody3D": { "type": "static" }
+      } },
+
+    { "id": "goal", "name": "출구",
+      "components": {
+        "Transform3D": { "position": [0, 1.4, -35] },
+        "MeshRenderer": { "mesh": "box", "size": [3, 3, 0.4], "color": "#7dffb0", "emissive": 0.75, "opacity": 0.55 },
+        "SphereCollider": { "radius": 1.6, "isTrigger": true }
+      },
+      "behaviors": [ { "type": "ChamberGoal", "radius": 2.2 } ] },
+
+    { "prefab": "Rock", "id": "rock-1",
+      "components": { "Transform3D": { "position": [-3, 1.2, 3] } } },
+    { "prefab": "Rock", "id": "rock-2",
+      "components": { "Transform3D": { "position": [-4.4, 1.2, 0] } } }
+  ]
+}

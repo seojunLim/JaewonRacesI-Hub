@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>에테르 Z+ : 세계의 법칙 — 3D 프로토타입 검증판</title>
+<meta name="description" content="《에테르 Z+ : 세계의 법칙》 Unity 개발 전 재미 검증용 3D 웹 프로토타입. 무게·위상·관성으로 세계의 법칙을 직접 조작한다. SJL Engine으로 제작.">
+<meta property="og:title" content="에테르 Z+ : 세계의 법칙 — 3D 프로토타입">
+<meta property="og:description" content="Unity로 만들기 전에, 이 게임이 정말 재미있는지 10분 안에 확인한다.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230a0f1e'/%3E%3Ccircle cx='16' cy='16' r='7' fill='none' stroke='%234be3ff' stroke-width='2.5'/%3E%3Cpath d='M16 3v6M16 23v6M3 16h6M23 16h6' stroke='%23ff8a3d' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#05070f; --line:#26304f; --text:#e4ebff; --dim:#8f9bc0;
+    --w:#ff8a3d; --p:#b06bff; --i:#4be3ff; --good:#7dffb0;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic',ui-sans-serif,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  button{font-family:inherit;cursor:pointer}
+  .hidden{display:none !important}
+  .mono{font-family:ui-monospace,'SF Mono',Menlo,monospace}
+  #game{position:fixed;inset:0}
+  canvas{display:block;width:100%;height:100%;outline:none}
+
+  /* ===== HUD ===== */
+  #hud{position:fixed;inset:0;pointer-events:none;z-index:10}
+  #topLeft{position:absolute;top:16px;left:18px;max-width:46vw}
+  #chName{font-size:15px;font-weight:800}
+  #chObj{font-size:12.5px;color:var(--dim);margin-top:3px;line-height:1.5}
+  #hpWrap{margin-top:10px;width:210px;height:9px;background:rgba(255,255,255,.08);
+    border:1px solid var(--line);border-radius:99px;overflow:hidden}
+  #hpFill{height:100%;width:100%;background:linear-gradient(90deg,#ff6b8a,#ffb46b);transition:width .12s}
+
+  #statBox{position:absolute;top:16px;right:18px;display:flex;flex-direction:column;
+    align-items:flex-end;gap:5px;font-size:11.5px;color:var(--dim)}
+  .tag{border:1px solid var(--c);color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);
+    padding:3px 9px;border-radius:99px;font-size:11px;font-weight:700}
+
+  /* 조준점 */
+  #crosshair{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;
+    opacity:0;transition:opacity .15s}
+  #crosshair.active{opacity:.9}
+  #crosshair::before,#crosshair::after{content:'';position:absolute;background:rgba(220,235,255,.85)}
+  #crosshair::before{left:11px;top:0;width:2px;height:8px;box-shadow:0 18px rgba(220,235,255,.85)}
+  #crosshair::after{top:11px;left:0;height:2px;width:8px;box-shadow:18px 0 rgba(220,235,255,.85)}
+
+  #targetBox{position:absolute;left:50%;top:calc(50% + 26px);transform:translateX(-50%);
+    background:rgba(6,10,22,.86);border:1px solid var(--c);border-radius:8px;padding:5px 12px;
+    display:flex;gap:9px;align-items:center;white-space:nowrap;font-size:12px}
+  #targetBox b{color:var(--c);font-weight:800}
+  #targetBox span{color:var(--dim);font-family:ui-monospace,monospace;font-size:11px}
+  #targetBox i{font-style:normal;font-size:10px;font-weight:800;padding:1px 6px;border-radius:99px}
+  #targetBox i.w{background:rgba(255,138,61,.22);color:var(--w)}
+  #targetBox i.l{background:rgba(75,227,255,.2);color:var(--i)}
+  #targetBox i.p{background:rgba(176,107,255,.22);color:var(--p)}
+
+  #abilityBar{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:8px}
+  #seriesRow{display:flex;gap:8px}
+  .sr{border:1px solid var(--line);background:rgba(8,12,26,.82);border-radius:9px;padding:6px 13px;
+    text-align:center;opacity:.5;transition:.12s}
+  .sr.on{opacity:1;border-color:var(--c);box-shadow:0 0 22px -6px var(--c);
+    background:color-mix(in srgb,var(--c) 10%,rgba(8,12,26,.9))}
+  .sr .sk{font-size:10px;color:var(--dim);letter-spacing:.06em;font-family:ui-monospace,monospace}
+  .sr.on .sk{color:var(--c)}
+  .sr .sn{font-size:13px;font-weight:800;margin-top:1px}
+  #actRow{display:flex;gap:6px;opacity:0;transform:translateY(6px);transition:.14s}
+  #actRow.show{opacity:1;transform:none}
+  .ac{border:1px solid color-mix(in srgb,var(--c) 45%,var(--line));border-radius:7px;padding:4px 10px;
+    background:rgba(6,10,22,.9);display:flex;gap:7px;align-items:center}
+  .ac b{font-size:10px;color:var(--c);font-family:ui-monospace,monospace}
+  .ac span{font-size:11.5px}
+
+  #hintBox{position:absolute;bottom:112px;left:50%;transform:translateX(-50%);
+    background:rgba(6,10,22,.92);border:1px solid var(--line);border-left:3px solid var(--i);
+    padding:9px 16px;border-radius:8px;font-size:12.5px;max-width:min(700px,88vw);line-height:1.55}
+  #toast{position:absolute;top:64px;left:50%;transform:translateX(-50%);background:rgba(6,10,22,.94);
+    border:1px solid var(--line);padding:8px 18px;border-radius:99px;font-size:12.5px;font-weight:700}
+
+  #btnRow{position:absolute;bottom:16px;right:18px;display:flex;gap:7px;pointer-events:auto}
+  .mini{background:rgba(10,16,32,.9);border:1px solid var(--line);color:var(--dim);padding:7px 13px;
+    border-radius:7px;font-size:11.5px;font-weight:600;transition:.12s}
+  .mini:hover{color:var(--text);border-color:#3d4a75}
+
+  /* 법칙 모드 화면 효과 */
+  #lawTint{position:fixed;inset:0;pointer-events:none;z-index:9;opacity:0;transition:opacity .18s;
+    background:radial-gradient(ellipse at 50% 50%,transparent 35%,rgba(40,80,200,.28) 100%)}
+  body.lawmode #lawTint{opacity:1}
+
+  /* ===== 오버레이 ===== */
+  .overlay{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 40%,rgba(30,44,90,.5),rgba(3,5,12,.94) 70%);
+    backdrop-filter:blur(3px);overflow:auto;padding:28px 18px}
+  .card{background:linear-gradient(180deg,#0e1526,#0a0f1d);border:1px solid var(--line);border-radius:16px;
+    padding:30px;max-width:780px;width:100%;box-shadow:0 30px 90px -20px #000}
+  .kicker{font-size:11px;letter-spacing:.22em;color:var(--i);font-weight:700;margin-bottom:12px}
+  h1{font-size:30px;letter-spacing:-.02em;line-height:1.2}
+  h1 .sub{display:block;font-size:14px;color:var(--dim);font-weight:600;margin-top:9px;letter-spacing:0}
+  .lead{color:var(--dim);font-size:13.5px;line-height:1.75;margin:18px 0 22px}
+  .lead b{color:var(--text)}
+  .keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin:20px 0}
+  .kk{border:1px solid var(--line);border-radius:9px;padding:9px 12px;background:rgba(255,255,255,.02);
+    display:flex;align-items:center;gap:10px}
+  .kk kbd{font-family:ui-monospace,monospace;font-size:10.5px;background:#1a2340;border:1px solid #2f3a5f;
+    border-bottom-width:2px;border-radius:5px;padding:3px 7px;color:var(--i);white-space:nowrap}
+  .kk span{font-size:12px;color:var(--dim)}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+  .btn{background:linear-gradient(180deg,#2b3f7a,#1d2c58);border:1px solid #3d55a0;color:#fff;
+    padding:12px 24px;border-radius:9px;font-size:13.5px;font-weight:800;transition:.14s}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px -8px #4a6ad0}
+  .btn.ghost{background:transparent;border-color:var(--line);color:var(--dim)}
+  .btn.ghost:hover{color:var(--text);border-color:#3d4a75;box-shadow:none}
+
+  #chamberList{display:flex;flex-direction:column;gap:8px;margin:18px 0}
+  .chamber{display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+    background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:11px;padding:13px 16px;
+    color:var(--text);transition:.12s}
+  .chamber:hover{background:rgba(90,130,255,.1);border-color:#3d55a0;transform:translateX(3px)}
+  .chamber.done{border-color:rgba(125,255,176,.34)}
+  .ci{font-family:ui-monospace,monospace;font-size:19px;font-weight:800;color:var(--dim);width:26px;text-align:center}
+  .cb{flex:1;min-width:0}
+  .cn{font-size:14.5px;font-weight:800}
+  .cc{font-size:10px;color:var(--i);margin-left:9px;letter-spacing:.08em;font-weight:700}
+  .cd{font-size:11.5px;color:var(--dim);margin-top:3px;line-height:1.5}
+  .ct{font-size:10.5px;color:#5f6b90;margin-top:4px}
+  .cs{color:var(--good);font-size:12px;font-weight:700;font-family:ui-monospace,monospace}
+
+  .row{display:flex;justify-content:space-between;gap:16px;padding:9px 0;
+    border-bottom:1px solid rgba(255,255,255,.06);font-size:12.5px}
+  .row span{color:var(--dim)}
+  .row b{text-align:right}
+  .note{margin-top:16px;font-size:11.5px;color:var(--i);background:rgba(75,227,255,.07);
+    border-left:2px solid var(--i);padding:9px 12px;border-radius:0 7px 7px 0;line-height:1.6}
+
+  .rsec{margin-bottom:26px}
+  .rsec h3{font-size:13px;letter-spacing:.1em;color:var(--i);margin-bottom:13px;font-weight:800}
+  .rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:16px}
+  .stat{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;background:rgba(255,255,255,.02)}
+  .stat b{display:block;font-size:22px;font-weight:800;font-family:ui-monospace,monospace}
+  .stat span{font-size:10.5px;color:var(--dim)}
+  .mbar{display:flex;align-items:center;gap:11px;margin:7px 0;font-size:12px}
+  .mbar>span{width:38px;color:var(--dim)}
+  .mtrack{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+  .mtrack i{display:block;height:100%;border-radius:99px}
+  .mbar>b{width:96px;text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--dim)}
+  .hintline{font-size:11px;color:#66739a;margin-top:10px;line-height:1.6}
+  .rtable{width:100%;border-collapse:collapse;font-size:11.5px}
+  .rtable th{text-align:left;color:var(--dim);font-weight:600;padding:7px 8px;border-bottom:1px solid var(--line);font-size:10.5px}
+  .rtable td{padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.05)}
+  .rate{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);flex-wrap:wrap}
+  .rl{flex:1;font-size:12px;min-width:230px}
+  .rl b{color:var(--i);font-family:ui-monospace,monospace;margin-right:6px}
+  .rr{display:flex;gap:5px}
+  .rr button{width:32px;height:30px;border-radius:7px;border:1px solid var(--line);background:transparent;
+    color:var(--dim);font-size:12px;font-weight:700}
+  .rr button:hover{border-color:#3d55a0;color:var(--text)}
+  .rr button.on{background:var(--i);border-color:var(--i);color:#04121a}
+  textarea{width:100%;margin-top:14px;min-height:88px;background:rgba(255,255,255,.03);
+    border:1px solid var(--line);border-radius:9px;padding:11px;color:var(--text);font-family:inherit;
+    font-size:12.5px;resize:vertical;line-height:1.6}
+  textarea:focus{outline:none;border-color:#3d55a0}
+  .warn{font-size:11.5px;color:#7b86ab;margin-top:20px;line-height:1.7;border-top:1px solid var(--line);padding-top:16px}
+  .warn a{color:var(--i)}
+  @media (max-width:620px){ .card{padding:22px 18px} h1{font-size:23px} .keys{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<div id="game"></div>
+<div id="lawTint"></div>
+
+<div id="hud" class="hidden">
+  <div id="topLeft">
+    <div id="chName">—</div>
+    <div id="chObj">—</div>
+    <div id="hpWrap"><div id="hpFill"></div></div>
+  </div>
+  <div id="statBox"></div>
+  <div id="crosshair"></div>
+  <div id="targetBox" class="hidden"></div>
+  <div id="abilityBar">
+    <div id="seriesRow"></div>
+    <div id="actRow"></div>
+  </div>
+  <div id="hintBox" class="hidden"></div>
+  <div id="toast" class="hidden"></div>
+  <div id="btnRow">
+    <button class="mini" id="btnHint">힌트 (H)</button>
+    <button class="mini" id="btnRestart">재시작</button>
+    <button class="mini" id="btnReport2">검증 리포트</button>
+    <button class="mini" id="btnMenu">메뉴 (Esc)</button>
+  </div>
+</div>
+
+<div id="menu" class="overlay">
+  <div class="card">
+    <div id="menuMain">
+      <div class="kicker">UNITY 개발 전 · 재미 검증 프로토타입</div>
+      <h1>에테르 Z+ : 세계의 법칙
+        <span class="sub">기획서 33장 「프로토타입에서 반드시 검증할 것」 5개 항목을 직접 만져 보는 3D 플레이어블 테스트</span>
+      </h1>
+      <p class="lead">
+        완성된 게임이 아니라 <b>가설 검증 장치</b>다. 3인칭 3D로,
+        <b>무게 · 위상 · 관성</b> 세 법칙과 <b>Z + 계열키 + 행동키</b> 입력 구조,
+        그리고 발동 순간의 감각을 기획서 그대로 구현했다.
+        챔버마다 검증 항목이 하나씩 붙어 있고, 끝나면 자동 계측과 자기 평가가 담긴 리포트가 나온다.
+      </p>
+      <div class="keys">
+        <div class="kk"><kbd>WASD</kbd><span>이동 (카메라 기준)</span></div>
+        <div class="kk"><kbd>Space</kbd><span>점프</span></div>
+        <div class="kk"><kbd>Shift</kbd><span>회피</span></div>
+        <div class="kk"><kbd>좌클릭</kbd><span>기본 공격 · 물체 차기</span></div>
+        <div class="kk"><kbd>방향키 / 휠</kbd><span>카메라 회전 · 거리</span></div>
+        <div class="kk"><kbd>Z (누르고)</kbd><span>법칙 조작 모드 — 세계가 느려진다</span></div>
+        <div class="kk"><kbd>Z + Q / E / R</kbd><span>무게 / 위상 / 관성 계열</span></div>
+        <div class="kk"><kbd>Z + 계열 + 좌·우클릭</kbd><span>세부 능력 (화면 중앙 조준점으로 조준)</span></div>
+        <div class="kk"><kbd>Z + 계열 + E / Shift</kbd><span>3·4번째 능력 (이동 / 저장 / 자기 대상)</span></div>
+      </div>
+      <div class="btns">
+        <button class="btn" id="btnStart">처음부터 플레이</button>
+        <button class="btn ghost" id="btnSelect">챔버 선택</button>
+        <button class="btn ghost" id="btnReport">검증 리포트</button>
+      </div>
+      <p class="warn">
+        키보드 + 마우스 전용. WebGL2를 지원하는 데스크톱 브라우저에서 동작한다.<br>
+        <b>SJL Engine</b>(<a href="https://github.com/seojunLim/SJL-GAME-ENGINE" target="_blank" rel="noopener">github.com/seojunLim/SJL-GAME-ENGINE</a>)으로 만들었다.
+        게임 로직은 <span class="mono">scenes/*.json</span> 과 <span class="mono">src/*.js</span> 에 있고,
+        <span class="mono">node --test</span> 로 모든 챔버의 해법이 헤드리스로 검증된다.
+      </p>
+    </div>
+
+    <div id="menuSelect" class="hidden">
+      <div class="kicker">검증 챔버</div>
+      <h1>어디를 검증할까
+        <span class="sub">각 챔버는 T1~T5 중 하나 이상을 정면으로 겨냥한다</span>
+      </h1>
+      <div id="chamberList"></div>
+      <div class="btns"><button class="btn ghost" id="btnBack">← 돌아가기</button></div>
+    </div>
+  </div>
+</div>
+
+<div id="clearCard" class="overlay hidden">
+  <div class="card" style="max-width:520px">
+    <div class="kicker">챔버 클리어</div>
+    <h1 style="font-size:24px">기록</h1>
+    <div id="clearBody" style="margin-top:18px"></div>
+    <div class="btns">
+      <button class="btn" id="btnNext">다음 챔버 →</button>
+      <button class="btn ghost" id="btnRetry">다시 플레이</button>
+      <button class="btn ghost" id="btnToList">챔버 목록</button>
+    </div>
+  </div>
+</div>
+
+<div id="report" class="overlay hidden">
+  <div class="card">
+    <div class="kicker">검증 리포트</div>
+    <h1 style="font-size:25px">이 게임, 만들 가치가 있는가
+      <span class="sub">자동 계측 + 직접 평가. 이 다섯 개가 통과하면 전체 프로젝트의 가능성이 높다 (기획서 33장)</span>
+    </h1>
+    <div id="reportBody" style="margin-top:22px"></div>
+    <div class="btns">
+      <button class="btn" id="btnCopy">마크다운으로 복사</button>
+      <button class="btn ghost" id="btnCloseReport">닫기</button>
+      <button class="btn ghost" id="btnReset">기록 초기화</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createGame } from './engine/src/runtime/browser.js';
+  import './src/behaviors.js';
+  import { startHud } from './src/hud.js';
+
+  // 입력 액션 맵은 프로젝트 설정에 있다 (Z / Q / E / R / 방향키 …).
+  // 브라우저 런타임은 설정 파일을 읽지 않으므로 여기서 직접 넘겨 준다.
+  const config = await (await fetch('sjl.config.json')).json();
+
+  const app = await createGame({
+    mount: '#game',
+    actions: config.input.actions,
+    scene: 'scenes/c1-awakening.json',
+    antialias: true,
+  });
+  window.game = app;
+
+  const hud = startHud(app, { onLoadChamber: load });
+  document.getElementById('btnHint').onclick =
+    () => window.dispatchEvent(new KeyboardEvent('keydown', { code: 'KeyH' }));
+
+  async function load(file) {
+    const text = await (await fetch(`scenes/${file}.json`)).text();
+    await app.loadScene(text);
+    app.time.timeScale = 1;
+    document.getElementById('hud').classList.remove('hidden');
+    hud.bindWorld(app.world);
+    app.canvas.focus();
+  }
+
+  hud.buildMenu();
+</script>
+</body>
+</html>

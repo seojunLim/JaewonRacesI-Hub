@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SJL Editor</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b0d12;
+        --panel: #12151d;
+        --panel-2: #171b25;
+        --border: #232936;
+        --text: #e6edf3;
+        --muted: #8b97a8;
+        --accent: #4cc9f0;
+        --ok: #3ddc84;
+        --warn: #ffd166;
+        --error: #ef476f;
+        --font: ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; height: 100%; overflow: hidden; }
+      body { background: var(--bg); color: var(--text); font: 13px/1.5 var(--font); }
+
+      .sjl-editor { display: flex; flex-direction: column; height: 100vh; }
+
+      /* Toolbar ---------------------------------------------------------- */
+      .sjl-toolbar {
+        display: flex; align-items: center; gap: 6px;
+        padding: 8px 12px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        flex: 0 0 auto;
+      }
+      .sjl-btn {
+        background: var(--panel-2); color: var(--text);
+        border: 1px solid var(--border); border-radius: 6px;
+        padding: 5px 11px; font: inherit; font-size: 12px; cursor: pointer;
+        transition: background .12s, border-color .12s;
+      }
+      .sjl-btn:hover { background: #1e2431; border-color: #303849; }
+      .sjl-btn.sjl-primary { border-color: var(--accent); color: var(--accent); }
+      .sjl-btn.sjl-active { border-color: var(--ok); color: var(--ok); }
+      .sjl-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+      .sjl-spacer { flex: 1; }
+      .sjl-stats { color: var(--muted); font: 11px var(--mono); white-space: nowrap; }
+
+      /* Body ------------------------------------------------------------- */
+      .sjl-body { display: flex; flex: 1; min-height: 0; }
+      .sjl-panel {
+        background: var(--panel);
+        display: flex; flex-direction: column;
+        flex: 0 0 260px; min-width: 200px;
+      }
+      .sjl-left { border-right: 1px solid var(--border); }
+      .sjl-right { border-left: 1px solid var(--border); flex-basis: 300px; }
+      .sjl-panel-title {
+        padding: 8px 12px; font-size: 11px; text-transform: uppercase;
+        letter-spacing: .07em; color: var(--muted);
+        border-bottom: 1px solid var(--border);
+      }
+      .sjl-viewport { flex: 1; min-width: 0; position: relative; background: #05070a; }
+      .sjl-viewport canvas { display: block; width: 100%; height: 100%; outline: none; }
+
+      /* Hierarchy -------------------------------------------------------- */
+      .sjl-tree { flex: 1; overflow: auto; padding: 4px 0; }
+      .sjl-node {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 8px; padding: 3px 10px 3px 8px; cursor: pointer;
+        border-left: 2px solid transparent;
+      }
+      .sjl-node:hover { background: var(--panel-2); }
+      .sjl-node.sjl-selected { background: #1b2433; border-left-color: var(--accent); }
+      .sjl-node.sjl-disabled .sjl-node-name { color: var(--muted); text-decoration: line-through; }
+      .sjl-node-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .sjl-node-meta { color: var(--muted); font: 10px var(--mono); flex: 0 0 auto; }
+
+      /* Inspector -------------------------------------------------------- */
+      .sjl-inspector { flex: 1; overflow: auto; padding: 8px; }
+      .sjl-empty { color: var(--muted); padding: 16px 8px; text-align: center; }
+      .sjl-entity-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .sjl-name-input {
+        flex: 1; min-width: 0; background: var(--panel-2); color: var(--text);
+        border: 1px solid var(--border); border-radius: 5px; padding: 4px 7px; font: inherit;
+      }
+      .sjl-entity-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; color: var(--muted); font: 10px var(--mono); }
+      .sjl-chip { background: var(--panel-2); border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; }
+      .sjl-chip.sjl-tag { color: var(--accent); }
+      .sjl-chip.sjl-readonly { color: var(--warn); }
+
+      .sjl-component { border: 1px solid var(--border); border-radius: 7px; margin-bottom: 8px; overflow: hidden; }
+      .sjl-component.sjl-behavior { border-color: #2b3348; }
+      .sjl-component-header {
+        display: flex; align-items: center; justify-content: space-between; gap: 8px;
+        background: var(--panel-2); padding: 5px 9px;
+        font-size: 12px; font-weight: 600;
+      }
+      .sjl-behavior .sjl-component-header { color: var(--accent); }
+      .sjl-remove {
+        background: none; border: none; color: var(--muted); cursor: pointer;
+        font-size: 15px; line-height: 1; padding: 0 2px;
+      }
+      .sjl-remove:hover { color: var(--error); }
+
+      .sjl-fields { padding: 6px 9px 8px; }
+      .sjl-field { display: grid; grid-template-columns: 92px 1fr; align-items: center; gap: 8px; margin-bottom: 4px; }
+      .sjl-field-label { color: var(--muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .sjl-input {
+        width: 100%; background: var(--bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 4px;
+        padding: 3px 6px; font: 11px var(--mono);
+      }
+      .sjl-input:focus { outline: none; border-color: var(--accent); }
+      .sjl-vec { display: flex; gap: 5px; }
+      .sjl-input-half { flex: 1; min-width: 0; }
+      .sjl-color { width: 34px; height: 24px; padding: 0; border: 1px solid var(--border); border-radius: 4px; background: none; }
+      .sjl-checkbox { justify-self: start; accent-color: var(--accent); }
+      .sjl-readonly-value { color: var(--muted); font: 11px var(--mono); }
+      .sjl-toggle { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
+      .sjl-add { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+
+      /* Console ---------------------------------------------------------- */
+      .sjl-console {
+        flex: 0 0 auto; max-height: 132px; overflow: auto;
+        background: #090b10; border-top: 1px solid var(--border);
+        padding: 6px 12px; font: 11px/1.55 var(--mono);
+      }
+      .sjl-log { white-space: pre-wrap; padding: 1px 0; }
+      .sjl-log-ok { color: var(--ok); }
+      .sjl-log-warn { color: var(--warn); }
+      .sjl-log-error { color: var(--error); }
+      .sjl-log-info { color: var(--muted); }
+
+      @media (max-width: 900px) {
+        .sjl-panel { flex-basis: 200px; }
+        .sjl-right { flex-basis: 240px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="editor"></div>
+    <script type="module">
+      import { createEditor } from './editor.js';
+
+      // `?scene=` points the editor at any scene file the dev server is serving:
+      //   http://localhost:5173/engine/src/editor/?scene=/scenes/main.json
+      const params = new URLSearchParams(location.search);
+      const editor = createEditor({
+        root: '#editor',
+        scene: params.get('scene') ?? '/scenes/main.json',
+        baseUrl: params.get('base') ?? '',
+      });
+
+      // Exposed so you can poke at the running game from the devtools console.
+      window.editor = editor;
+      window.app = editor.app;
+    </script>
+  </body>
+</html>

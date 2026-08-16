@@ -1,0 +1,166 @@
+{
+  "$schema": "../schemas/scene.schema.json",
+  "name": "c7-boss",
+  "settings": {
+    "gravity3d": [0, -24, 0],
+    "seed": "aether-c7",
+    "physics3d": { "iterations": 12 },
+    "skybox": { "top": "#402a1e", "bottom": "#05070f", "horizon": 0.5 }
+  },
+
+  "prefabs": {
+    "Rock": {
+      "name": "바위",
+      "tags": ["law"],
+      "components": {
+        "Transform3D": {},
+        "MeshRenderer": { "mesh": "sphere", "size": [1.1, 1.1, 1.1], "color": "#aab4d6" },
+        "Rigidbody3D": { "type": "dynamic", "mass": 6, "linearDamping": 0.06 },
+        "SphereCollider": { "radius": 0.55, "friction": 0.06, "restitution": 0.12 },
+        "LawTarget": { "label": "바위", "kind": "rock" }
+      }
+    },
+    "Boulder": {
+      "name": "큰 바위",
+      "tags": ["law"],
+      "components": {
+        "Transform3D": {},
+        "MeshRenderer": { "mesh": "sphere", "size": [2.2, 2.2, 2.2], "color": "#9aa3c9" },
+        "Rigidbody3D": { "type": "dynamic", "mass": 40, "linearDamping": 0.01 },
+        "SphereCollider": { "radius": 1.1, "friction": 0.01, "restitution": 0.06 },
+        "LawTarget": { "label": "큰 바위", "kind": "boulder" }
+      }
+    },
+    "Debris": {
+      "name": "부유 파편",
+      "tags": ["law", "debris"],
+      "components": {
+        "Transform3D": {},
+        "MeshRenderer": { "mesh": "box", "size": [1.4, 1.4, 1.4], "color": "#b3a6d6", "emissive": 0.25 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 12, "gravityScale": 0, "linearDamping": 0.02 },
+        "BoxCollider3D": { "size": [1.4, 1.4, 1.4], "friction": 0.3 },
+        "LawTarget": { "label": "부유 파편", "kind": "debris" }
+      },
+      "behaviors": [ { "type": "OrbitDebris" } ]
+    }
+  },
+
+  "entities": [
+    { "id": "manager", "name": "Chamber",
+      "components": { "Transform3D": {} },
+      "behaviors": [
+        { "type": "LawWorld" },
+        { "type": "Chamber",
+          "title": "첫 번째 보스 · 낙하를 잊은 자",
+          "objective": "보스를 쓰러뜨려라. 법칙 방어가 남아 있는 동안에는 공격이 거의 통하지 않는다.",
+          "test": "검증 3·5 — 조합의 깊이 / 타격감",
+          "abilities": "weight,phase,inertia",
+          "hint1": "떠 있는 파편을 무겁게 만들면 궤도를 잃는다. 파편이 전부 떨어지면 핵이 드러난다.",
+          "hint2": "핵이 드러났을 때 무거운 물체를 증폭해 명중시키면 피해가 두 배가 된다.",
+          "hint3": "보스의 돌진도 이미 일어난 움직임이다. 방향을 꺾어 벽에 처박을 수 있다.",
+          "next": "c8-sandbox" }
+      ] },
+
+    { "id": "camera", "name": "Camera",
+      "components": {
+        "Transform3D": { "position": [0, 11, 24] },
+        "Camera3D": { "fov": 60, "far": 320, "background": "#05070f", "fogDensity": 0.007, "fogColor": "#1c1108" }
+      },
+      "behaviors": [ { "type": "LawCamera", "target": "player", "distance": 15, "pitch": 26 } ] },
+
+    { "id": "sun", "components": { "Transform3D": { "rotation": [-46, 150, 0] },
+        "Light": { "type": "directional", "color": "#ffd2a0", "intensity": 1.4 } } },
+    { "id": "fill", "components": { "Transform3D": {},
+        "Light": { "type": "ambient", "color": "#8b8dc8", "intensity": 0.42 } } },
+
+    { "id": "player", "name": "여행자", "tags": ["player"],
+      "components": {
+        "Transform3D": { "position": [0, 1.6, 14] },
+        "MeshRenderer": { "mesh": "box", "size": [0.8, 1.7, 0.8], "color": "#d3e3ff", "emissive": 0.12 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 3 },
+        "BoxCollider3D": { "size": [0.8, 1.7, 0.8], "friction": 0.08 },
+        "LawTarget": { "label": "여행자", "kind": "player", "grabbable": false }
+      },
+      "behaviors": [ { "type": "AetherPlayer" }, { "type": "LawDevice" } ] },
+
+    { "id": "floor", "name": "무너진 신전", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [0, -0.5, 0] },
+        "MeshRenderer": { "mesh": "box", "size": [44, 1, 52], "color": "#5b4d63" },
+        "BoxCollider3D": { "size": [44, 1, 52], "friction": 0.55 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "wall-l", "components": {
+        "Transform3D": { "position": [-22.5, 4, 0] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 12, 52], "color": "#463c50" },
+        "BoxCollider3D": { "size": [1, 12, 52] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "wall-r", "components": {
+        "Transform3D": { "position": [22.5, 4, 0] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 12, 52], "color": "#463c50" },
+        "BoxCollider3D": { "size": [1, 12, 52] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "wall-back", "components": {
+        "Transform3D": { "position": [0, 4, 26.5] },
+        "MeshRenderer": { "mesh": "box", "size": [44, 12, 1], "color": "#463c50" },
+        "BoxCollider3D": { "size": [44, 12, 1] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "wall-front", "components": {
+        "Transform3D": { "position": [0, 4, -26.5] },
+        "MeshRenderer": { "mesh": "box", "size": [44, 12, 1], "color": "#463c50" },
+        "BoxCollider3D": { "size": [44, 12, 1] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "ledge-l", "name": "제단", "components": {
+        "Transform3D": { "position": [-16, 1.5, -6] },
+        "MeshRenderer": { "mesh": "box", "size": [7, 3, 7], "color": "#6b5c78" },
+        "BoxCollider3D": { "size": [7, 3, 7] }, "Rigidbody3D": { "type": "static" } } },
+    { "id": "ledge-r", "name": "제단", "components": {
+        "Transform3D": { "position": [16, 1.5, -6] },
+        "MeshRenderer": { "mesh": "box", "size": [7, 3, 7], "color": "#6b5c78" },
+        "BoxCollider3D": { "size": [7, 3, 7] }, "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "boss", "name": "낙하를 잊은 자", "tags": ["boss"],
+      "components": {
+        "Transform3D": { "position": [0, 3, -12] },
+        "MeshRenderer": { "mesh": "box", "size": [4, 5.4, 4], "color": "#6b608c", "shininess": 0.35 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 90, "linearDamping": 0.15 },
+        "BoxCollider3D": { "size": [4, 5.4, 4], "friction": 0.5 },
+        "Health": { "current": 340, "max": 340 },
+        "LawTarget": { "label": "낙하를 잊은 자", "kind": "enemy" }
+      },
+      "behaviors": [ { "type": "ForgottenFall", "debrisPrefab": "Debris", "debrisCount": 3 } ] },
+
+    { "id": "launcher-l", "name": "고대 사출기",
+      "components": {
+        "Transform3D": { "position": [-10, 1.4, 20] },
+        "MeshRenderer": { "mesh": "cylinder", "size": [2.6, 2.8, 2.6], "color": "#6e6183", "emissive": 0.1 },
+        "BoxCollider3D": { "size": [2.6, 2.8, 2.6] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [
+        { "type": "Launcher", "prefab": "Boulder", "interval": 7, "speed": 15,
+          "direction": [0, 0, -1], "offset": [0, 0.2, -2.6], "maxAlive": 2 }
+      ] },
+    { "id": "launcher-r", "name": "고대 사출기",
+      "components": {
+        "Transform3D": { "position": [10, 1.4, 20] },
+        "MeshRenderer": { "mesh": "cylinder", "size": [2.6, 2.8, 2.6], "color": "#6e6183", "emissive": 0.1 },
+        "BoxCollider3D": { "size": [2.6, 2.8, 2.6] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [
+        { "type": "Launcher", "prefab": "Boulder", "interval": 7, "speed": 15,
+          "direction": [0, 0, -1], "offset": [0, 0.2, -2.6], "maxAlive": 2 }
+      ] },
+
+    { "prefab": "Rock", "id": "rock-1", "components": { "Transform3D": { "position": [-5, 1.2, 12] } } },
+    { "prefab": "Rock", "id": "rock-2", "components": { "Transform3D": { "position": [5, 1.2, 12] } } },
+    { "prefab": "Boulder", "id": "boulder-1", "components": { "Transform3D": { "position": [-14, 1.6, 8] } } },
+    { "prefab": "Boulder", "id": "boulder-2", "components": { "Transform3D": { "position": [14, 1.6, 8] } } },
+
+    { "id": "goal", "name": "출구",
+      "components": {
+        "Transform3D": { "position": [0, 1.4, -24] },
+        "MeshRenderer": { "mesh": "box", "size": [3, 3, 0.4], "color": "#7dffb0", "emissive": 0.75, "opacity": 0.55 },
+        "SphereCollider": { "radius": 1.6, "isTrigger": true }
+      },
+      "behaviors": [ { "type": "ChamberGoal", "radius": 2.4, "needClear": true } ] }
+  ]
+}

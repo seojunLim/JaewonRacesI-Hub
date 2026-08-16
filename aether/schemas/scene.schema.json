@@ -1,0 +1,5266 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sjl-engine.dev/schemas/scene.schema.json",
+  "title": "SJL Engine scene (v0.1.0)",
+  "description": "A complete level: settings, assets, prefabs and an entity tree. Run `sjl validate` for checks JSON Schema cannot express, such as entity references resolving and animation clips existing.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string",
+      "description": "Scene name; shown in tooling"
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "gravity": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 2,
+              "maxItems": 2
+            },
+            {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                }
+              }
+            }
+          ],
+          "default": [
+            0,
+            -20
+          ],
+          "description": "World units per second squared"
+        },
+        "seed": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Seeds the world RNG. Set it to make the run reproducible."
+        },
+        "timeScale": {
+          "type": "number",
+          "default": 1
+        },
+        "physics": {
+          "type": "object",
+          "properties": {
+            "gravity": {
+              "description": "World units per second squared",
+              "default": [
+                0,
+                -20
+              ],
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "iterations": {
+              "description": "Solver iterations per step",
+              "default": 8,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64
+            },
+            "correctionPercent": {
+              "default": 0.8,
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "slop": {
+              "default": 0.01,
+              "type": "number",
+              "minimum": 0
+            },
+            "sleepVelocity": {
+              "default": 0.05,
+              "type": "number",
+              "minimum": 0
+            },
+            "sleepTime": {
+              "description": "Seconds below sleepVelocity before sleeping",
+              "default": 0.5,
+              "type": "number",
+              "minimum": 0
+            },
+            "cellSize": {
+              "default": 2,
+              "type": "number",
+              "minimum": 0.1
+            },
+            "enabled": {
+              "default": true,
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false,
+          "description": "World-level physics configuration. Created automatically from the scene's `settings.physics` block; you rarely add it by hand."
+        }
+      },
+      "additionalProperties": true
+    },
+    "assets": {
+      "type": "array",
+      "description": "Assets this scene needs. Referenced by id from component fields.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique id; what component fields reference"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "texture",
+              "audio",
+              "json",
+              "text",
+              "atlas"
+            ],
+            "default": "texture"
+          },
+          "src": {
+            "type": "string",
+            "description": "Path relative to the project root"
+          },
+          "width": {
+            "type": "integer",
+            "description": "Declared width; used in headless runs"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "frames": {
+            "type": "object",
+            "description": "Named atlas regions, in pixels",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "w": {
+                  "type": "number"
+                },
+                "h": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "w",
+                "h"
+              ]
+            }
+          }
+        },
+        "required": [
+          "id"
+        ]
+      }
+    },
+    "prefabs": {
+      "type": "object",
+      "description": "Reusable entity templates, instanced with { \"prefab\": \"Name\" }",
+      "additionalProperties": {
+        "$ref": "#/definitions/entity"
+      }
+    },
+    "entities": {
+      "type": "array",
+      "description": "The scene's root entities",
+      "items": {
+        "$ref": "#/definitions/entity"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "entity": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable id, unique in the scene. Entity-reference fields point at it."
+        },
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "prefab": {
+          "type": "string",
+          "description": "Name of a prefab to instance and override"
+        },
+        "components": {
+          "type": "object",
+          "properties": {
+            "Transform": {
+              "type": "object",
+              "properties": {
+                "position": {
+                  "description": "Local position in world units",
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "rotation": {
+                  "description": "Local rotation in DEGREES, counter-clockwise",
+                  "default": 0,
+                  "type": "number"
+                },
+                "scale": {
+                  "description": "Local scale multiplier",
+                  "default": [
+                    1,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "description": "Local position, rotation and scale. Every entity that exists in space needs one. Values are relative to the parent entity when there is one."
+            },
+            "Sprite": {
+              "type": "object",
+              "properties": {
+                "texture": {
+                  "description": "Asset id from the scene `assets` list. Omit for an untextured colored quad. (texture id)",
+                  "type": "string"
+                },
+                "frame": {
+                  "description": "Named region within an atlas texture. Empty means the whole texture.",
+                  "default": "",
+                  "type": "string"
+                },
+                "color": {
+                  "description": "Tint, multiplied with the texture",
+                  "default": "#ffffff",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "size": {
+                  "description": "Size in world units before Transform.scale is applied",
+                  "default": [
+                    1,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "anchor": {
+                  "description": "Pivot within the sprite: [0,0] bottom-left, [0.5,0.5] center, [1,1] top-right",
+                  "default": [
+                    0.5,
+                    0.5
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "flipX": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "flipY": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "layer": {
+                  "description": "Sort layer. Higher draws on top. Ties broken by `order`, then entity id.",
+                  "default": 0,
+                  "type": "integer"
+                },
+                "order": {
+                  "description": "Sort order within the layer",
+                  "default": 0,
+                  "type": "integer"
+                },
+                "opacity": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "visible": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Draws a texture (or a solid color, if no texture is set) at the entity transform."
+            },
+            "ShapeRenderer": {
+              "type": "object",
+              "properties": {
+                "shape": {
+                  "default": "rectangle",
+                  "type": "string",
+                  "enum": [
+                    "rectangle",
+                    "circle",
+                    "line",
+                    "polygon"
+                  ]
+                },
+                "size": {
+                  "description": "Width/height; for a circle, x is the diameter",
+                  "default": [
+                    1,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "color": {
+                  "default": "#ffffff",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "filled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "thickness": {
+                  "description": "Outline width in world units",
+                  "default": 0.05,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "points": {
+                  "description": "Vertices for `line` and `polygon`, in local space",
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                },
+                "anchor": {
+                  "default": [
+                    0.5,
+                    0.5
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "layer": {
+                  "default": 0,
+                  "type": "integer"
+                },
+                "order": {
+                  "default": 0,
+                  "type": "integer"
+                },
+                "opacity": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "visible": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Draws a primitive shape. Useful for prototypes, debug visuals and games that never load an image at all."
+            },
+            "Text": {
+              "type": "object",
+              "properties": {
+                "text": {
+                  "description": "The string to draw",
+                  "default": "",
+                  "type": "string"
+                },
+                "font": {
+                  "default": "sans-serif",
+                  "type": "string"
+                },
+                "size": {
+                  "description": "Cap height in world units",
+                  "default": 0.5,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "color": {
+                  "default": "#ffffff",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "align": {
+                  "default": "center",
+                  "type": "string",
+                  "enum": [
+                    "left",
+                    "center",
+                    "right"
+                  ]
+                },
+                "baseline": {
+                  "default": "middle",
+                  "type": "string",
+                  "enum": [
+                    "top",
+                    "middle",
+                    "bottom"
+                  ]
+                },
+                "bold": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "italic": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "layer": {
+                  "default": 10,
+                  "type": "integer"
+                },
+                "order": {
+                  "default": 0,
+                  "type": "integer"
+                },
+                "opacity": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "visible": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "screenSpace": {
+                  "description": "Ignore the camera and position in screen units — for HUDs",
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Draws a string. Uses the backend's text support; no font asset required."
+            },
+            "Camera": {
+              "type": "object",
+              "properties": {
+                "size": {
+                  "description": "Half the visible height, in world units",
+                  "default": 5,
+                  "type": "number",
+                  "minimum": 0.01
+                },
+                "background": {
+                  "description": "Clear color",
+                  "default": "#0d1117",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "active": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "priority": {
+                  "description": "Highest priority active camera wins",
+                  "default": 0,
+                  "type": "integer"
+                },
+                "zoom": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0.01
+                },
+                "viewport": {
+                  "default": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1
+                  },
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "y": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "w": {
+                      "default": 1,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "h": {
+                      "default": 1,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "bounds": {
+                  "description": "Optional world-space clamp for the camera center",
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "default": false,
+                      "type": "boolean"
+                    },
+                    "min": {
+                      "default": [
+                        -100,
+                        -100
+                      ],
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "x": {
+                              "type": "number"
+                            },
+                            "y": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "x",
+                            "y"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    },
+                    "max": {
+                      "default": [
+                        100,
+                        100
+                      ],
+                      "oneOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          },
+                          "minItems": 2,
+                          "maxItems": 2
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "x": {
+                              "type": "number"
+                            },
+                            "y": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "x",
+                            "y"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "number"
+                        }
+                      ]
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "additionalProperties": false,
+              "description": "A view onto the world. Exactly one camera should be `active` at a time; the render system picks the active one with the highest priority."
+            },
+            "CameraFollow": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "description": "Scene id of the entity to follow (entity id)",
+                  "type": "string"
+                },
+                "offset": {
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "halfLife": {
+                  "description": "Smoothing half-life in seconds",
+                  "default": 0.12,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "lockX": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "lockY": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "deadZone": {
+                  "description": "Half-extents of the no-move zone",
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "description": "Smoothly moves this entity toward a target entity. Put it on the camera."
+            },
+            "TilemapRenderer": {
+              "type": "object",
+              "properties": {
+                "texture": {
+                  "type": "string",
+                  "description": "(texture id)"
+                },
+                "width": {
+                  "description": "Columns",
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "height": {
+                  "description": "Rows",
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "tileSize": {
+                  "description": "World-unit size of one tile",
+                  "default": [
+                    1,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "tilesetColumns": {
+                  "description": "Columns in the tileset image",
+                  "default": 1,
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "tilesetTileSize": {
+                  "description": "Size of one tile in the tileset image, in pixels",
+                  "default": [
+                    16,
+                    16
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "data": {
+                  "description": "1-based tile ids, 0 = empty",
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                },
+                "color": {
+                  "default": "#ffffff",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "layer": {
+                  "default": -10,
+                  "type": "integer"
+                },
+                "order": {
+                  "default": 0,
+                  "type": "integer"
+                },
+                "visible": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "solidTiles": {
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "additionalProperties": false,
+              "description": "Draws a grid of tiles from a tileset texture. `data` is row-major with row 0 at the BOTTOM, matching the +y-up axis convention. Tile index 0 means empty."
+            },
+            "ParticleEmitter": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "rate": {
+                  "description": "Particles per second",
+                  "default": 20,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "burst": {
+                  "description": "Particles emitted immediately on start",
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "maxParticles": {
+                  "default": 200,
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "lifetime": {
+                  "description": "[min, max] seconds",
+                  "default": [
+                    0.5,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "speed": {
+                  "description": "[min, max] world units/second",
+                  "default": [
+                    1,
+                    3
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "direction": {
+                  "description": "Emission direction in degrees",
+                  "default": 90,
+                  "type": "number"
+                },
+                "spread": {
+                  "description": "Cone width in degrees",
+                  "default": 360,
+                  "type": "number"
+                },
+                "startSize": {
+                  "description": "[min, max] world units",
+                  "default": [
+                    0.1,
+                    0.2
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "endSize": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "startColor": {
+                  "default": "#ffffff",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "endColor": {
+                  "default": "#ffffff00",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "gravity": {
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "drag": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "texture": {
+                  "type": "string",
+                  "description": "(texture id)"
+                },
+                "layer": {
+                  "default": 5,
+                  "type": "integer"
+                },
+                "particles": {},
+                "emitAccumulator": {}
+              },
+              "additionalProperties": false,
+              "description": "A CPU particle emitter. Particles are simulated in the emitter's world space and drawn as colored quads. Deterministic: it draws from the world's seeded RNG."
+            },
+            "Rigidbody": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "default": "dynamic",
+                  "type": "string",
+                  "enum": [
+                    "dynamic",
+                    "kinematic",
+                    "static"
+                  ]
+                },
+                "velocity": {
+                  "description": "World units per second",
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "angularVelocity": {
+                  "description": "Degrees per second",
+                  "default": 0,
+                  "type": "number"
+                },
+                "mass": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0.0001
+                },
+                "gravityScale": {
+                  "description": "0 disables gravity for this body",
+                  "default": 1,
+                  "type": "number"
+                },
+                "linearDamping": {
+                  "description": "Velocity lost per second, 0..1-ish",
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "angularDamping": {
+                  "default": 0.05,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "freezeRotation": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "freezeX": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "freezeY": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "continuous": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "force": {
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "torque": {
+                  "default": 0,
+                  "type": "number"
+                },
+                "grounded": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "canSleep": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "sleeping": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "sleepTimer": {
+                  "default": 0,
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Makes an entity move under the physics solver.\n  dynamic   — moved by forces and collisions (a player, a crate)\n  kinematic — moved by your code, pushes dynamics, is never pushed back (a moving platform)\n  static    — never moves (the ground). Cheapest; static/static pairs are skipped entirely."
+            },
+            "BoxCollider": {
+              "type": "object",
+              "properties": {
+                "size": {
+                  "description": "Full width and height in world units",
+                  "default": [
+                    1,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "offset": {
+                  "description": "Local offset from the entity origin",
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "isTrigger": {
+                  "description": "Detect overlaps and fire trigger events, but never push anything",
+                  "default": false,
+                  "type": "boolean"
+                },
+                "restitution": {
+                  "description": "Bounciness",
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "friction": {
+                  "default": 0.2,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "density": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0.0001
+                },
+                "layer": {
+                  "description": "Collision layer bit (1, 2, 4, 8, ...)",
+                  "default": 1,
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mask": {
+                  "description": "Bitmask of layers to collide with; -1 = all",
+                  "default": -1,
+                  "type": "integer"
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "An axis-aligned box collider. Rotation of the entity is ignored for collision — AABBs are what make the broadphase cheap and the solver stable. Use several boxes or a CircleCollider if you need rotated shapes."
+            },
+            "CircleCollider": {
+              "type": "object",
+              "properties": {
+                "radius": {
+                  "default": 0.5,
+                  "type": "number",
+                  "minimum": 0.0001
+                },
+                "offset": {
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "isTrigger": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "restitution": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "friction": {
+                  "default": 0.2,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "density": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0.0001
+                },
+                "layer": {
+                  "default": 1,
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mask": {
+                  "default": -1,
+                  "type": "integer"
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "A circular collider. Cheapest shape, and the only one that rotates for free."
+            },
+            "PhysicsSettings": {
+              "type": "object",
+              "properties": {
+                "gravity": {
+                  "description": "World units per second squared",
+                  "default": [
+                    0,
+                    -20
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "iterations": {
+                  "description": "Solver iterations per step",
+                  "default": 8,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 64
+                },
+                "correctionPercent": {
+                  "default": 0.8,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "slop": {
+                  "default": 0.01,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "sleepVelocity": {
+                  "default": 0.05,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "sleepTime": {
+                  "description": "Seconds below sleepVelocity before sleeping",
+                  "default": 0.5,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cellSize": {
+                  "default": 2,
+                  "type": "number",
+                  "minimum": 0.1
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "World-level physics configuration. Created automatically from the scene's `settings.physics` block; you rarely add it by hand."
+            },
+            "SpriteAnimator": {
+              "type": "object",
+              "properties": {
+                "clips": {
+                  "description": "Animation clips available on this entity",
+                  "default": [],
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "frames": {
+                        "description": "Atlas frame names, in play order",
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "fps": {
+                        "default": 12,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "loop": {
+                        "default": true,
+                        "type": "boolean"
+                      },
+                      "events": {
+                        "description": "Fires `animation:event` when playback reaches a frame",
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "frame": {
+                              "default": 0,
+                              "type": "integer",
+                              "minimum": 0
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "current": {
+                  "description": "Name of the clip to play",
+                  "default": "",
+                  "type": "string"
+                },
+                "playing": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "speed": {
+                  "description": "Playback rate multiplier",
+                  "default": 1,
+                  "type": "number"
+                },
+                "frameIndex": {
+                  "default": 0,
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "timer": {
+                  "default": 0,
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Plays frame-based sprite animations. Clips are declared inline so a scene file is self-contained; `sjl validate` checks that `current` names a clip that exists."
+            },
+            "Tween": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "description": "Dotted path, e.g. \"Transform.position\"",
+                  "type": "string"
+                },
+                "from": {
+                  "description": "Start value. Omit to use the current value on start."
+                },
+                "to": {
+                  "description": "End value"
+                },
+                "duration": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "ease": {
+                  "default": "linear",
+                  "type": "string",
+                  "enum": [
+                    "linear",
+                    "inQuad",
+                    "outQuad",
+                    "inOutQuad",
+                    "inCubic",
+                    "outCubic",
+                    "inOutCubic",
+                    "inQuart",
+                    "outQuart",
+                    "inOutQuart",
+                    "inSine",
+                    "outSine",
+                    "inOutSine",
+                    "inExpo",
+                    "outExpo",
+                    "inOutExpo",
+                    "inCirc",
+                    "outCirc",
+                    "inBack",
+                    "outBack",
+                    "outBounce",
+                    "inBounce",
+                    "outElastic",
+                    "inElastic"
+                  ]
+                },
+                "delay": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "loop": {
+                  "default": "none",
+                  "type": "string",
+                  "enum": [
+                    "none",
+                    "restart",
+                    "pingPong"
+                  ]
+                },
+                "playing": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "destroyOnComplete": {
+                  "description": "Destroy the entity when done",
+                  "default": false,
+                  "type": "boolean"
+                },
+                "removeOnComplete": {
+                  "description": "Remove this Tween when done",
+                  "default": true,
+                  "type": "boolean"
+                },
+                "elapsed": {
+                  "default": 0,
+                  "type": "number"
+                },
+                "direction": {
+                  "default": 1,
+                  "type": "integer"
+                },
+                "started": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "resolvedFrom": {}
+              },
+              "additionalProperties": false,
+              "required": [
+                "target",
+                "to"
+              ],
+              "description": "Animates one numeric or vec2 property over time. `target` is a dotted path into the entity's components, e.g. `Transform.position` or `Sprite.opacity`."
+            },
+            "AudioSource": {
+              "type": "object",
+              "properties": {
+                "clip": {
+                  "type": "string",
+                  "description": "(audio id)"
+                },
+                "volume": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "pitch": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0.01,
+                  "maximum": 4
+                },
+                "loop": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "playOnStart": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "play": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "playing": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "handle": {}
+              },
+              "additionalProperties": false,
+              "description": "Plays a sound. In headless runs the audio backend records calls instead of making noise, so tests can assert that the jump sound fired without an audio device."
+            },
+            "Lifetime": {
+              "type": "object",
+              "properties": {
+                "seconds": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "elapsed": {
+                  "default": 0,
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Destroys the entity after `seconds`. The standard way to clean up effects."
+            },
+            "Health": {
+              "type": "object",
+              "properties": {
+                "current": {
+                  "default": 100,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "max": {
+                  "default": 100,
+                  "type": "number",
+                  "minimum": 0.0001
+                },
+                "invulnerable": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "invulnerableTimer": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false,
+              "description": "Hit points. Nothing in the engine reads this — it exists because almost every game declares it identically, and having one shared shape means the editor and the debug overlay can display it."
+            },
+            "Follow": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "type": "string",
+                  "description": "(entity id)"
+                },
+                "offset": {
+                  "default": [
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "speed": {
+                  "description": "0 means snap to the target instantly",
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "halfLife": {
+                  "description": "If > 0, smooth instead of moving at `speed`",
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "matchRotation": {
+                  "default": false,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Moves this entity toward another entity every frame. Simpler than a behavior."
+            },
+            "Transform3D": {
+              "type": "object",
+              "properties": {
+                "position": {
+                  "description": "Local position in world units",
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "rotation": {
+                  "description": "Euler angles in DEGREES: x = pitch, y = yaw, z = roll (applied YXZ)",
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "scale": {
+                  "description": "Local scale multiplier",
+                  "default": [
+                    1,
+                    1,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "description": "Local position, rotation and scale in 3D. Values are relative to the parent entity. Rotation is Euler degrees in YXZ (yaw, pitch, roll) order."
+            },
+            "MeshRenderer": {
+              "type": "object",
+              "properties": {
+                "mesh": {
+                  "description": "Primitive name (box, sphere, plane, quad, cylinder, cone) or a mesh asset id",
+                  "default": "box",
+                  "type": "string"
+                },
+                "color": {
+                  "description": "Base color, multiplied with the texture",
+                  "default": "#cccccc",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "texture": {
+                  "description": "Optional albedo texture (texture id)",
+                  "type": "string"
+                },
+                "shininess": {
+                  "description": "Specular tightness",
+                  "default": 0.25,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "emissive": {
+                  "description": "Self-illumination, 0..1",
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "opacity": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "doubleSided": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "castShadow": {
+                  "description": "Reserved; the forward renderer ignores it",
+                  "default": true,
+                  "type": "boolean"
+                },
+                "visible": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "layer": {
+                  "description": "Sort layer; transparent meshes sort back-to-front",
+                  "default": 0,
+                  "type": "integer"
+                },
+                "size": {
+                  "description": "Mesh size in world units",
+                  "default": [
+                    1,
+                    1,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "description": "Draws a mesh. `mesh` names a built-in primitive (box, sphere, plane, cylinder, cone, quad) or an asset id. Materials are a deliberately small set: a color, an optional texture, and two lighting knobs."
+            },
+            "Camera3D": {
+              "type": "object",
+              "properties": {
+                "projection": {
+                  "default": "perspective",
+                  "type": "string",
+                  "enum": [
+                    "perspective",
+                    "orthographic"
+                  ]
+                },
+                "fov": {
+                  "description": "Vertical field of view, in degrees",
+                  "default": 60,
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 179
+                },
+                "orthoSize": {
+                  "description": "Half the visible height, orthographic only",
+                  "default": 5,
+                  "type": "number",
+                  "minimum": 0.01
+                },
+                "near": {
+                  "description": "Near clip plane",
+                  "default": 0.1,
+                  "type": "number",
+                  "minimum": 0.0001
+                },
+                "far": {
+                  "description": "Far clip plane",
+                  "default": 1000,
+                  "type": "number",
+                  "minimum": 0.001
+                },
+                "background": {
+                  "default": "#0d1117",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "active": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "priority": {
+                  "default": 0,
+                  "type": "integer"
+                },
+                "viewport": {
+                  "description": "Normalized 0..1 screen rect, for split screen",
+                  "default": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 1,
+                    "h": 1
+                  },
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "y": {
+                      "default": 0,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "w": {
+                      "default": 1,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "h": {
+                      "default": 1,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "fogDensity": {
+                  "description": "Exponential fog, 0 = off",
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "fogColor": {
+                  "default": "#0d1117",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "description": "A perspective (or orthographic) view onto the 3D world. The active camera with the highest priority wins. An unrotated camera looks down -z."
+            },
+            "Light": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "default": "directional",
+                  "type": "string",
+                  "enum": [
+                    "directional",
+                    "point",
+                    "ambient"
+                  ]
+                },
+                "color": {
+                  "default": "#ffffff",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "intensity": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "range": {
+                  "description": "Point lights only",
+                  "default": 20,
+                  "type": "number",
+                  "minimum": 0.01
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "A light source.\n  directional — infinitely far, shines along the entity's forward (-z). The sun.\n  point       — radiates from the entity position, falling off over `range`.\n  ambient     — uniform fill from every direction; position and rotation are ignored."
+            },
+            "Skybox": {
+              "type": "object",
+              "properties": {
+                "top": {
+                  "default": "#1b2a4a",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "bottom": {
+                  "default": "#0a0d14",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^#?([0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+                    },
+                    {
+                      "type": "string",
+                      "enum": [
+                        "transparent",
+                        "black",
+                        "white",
+                        "red",
+                        "green",
+                        "blue",
+                        "yellow",
+                        "cyan",
+                        "magenta",
+                        "orange",
+                        "purple",
+                        "gray",
+                        "grey",
+                        "darkGray",
+                        "lightGray"
+                      ]
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 4
+                    }
+                  ]
+                },
+                "horizon": {
+                  "default": 0.5,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "A vertical gradient behind the scene. Cheap, and enough to make a 3D scene read as a space rather than a void — which a flat clear color does not."
+            },
+            "CameraOrbit": {
+              "type": "object",
+              "properties": {
+                "target": {
+                  "description": "Scene id of the entity to orbit (entity id)",
+                  "type": "string"
+                },
+                "targetOffset": {
+                  "description": "Offset from the target position",
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "distance": {
+                  "default": 8,
+                  "type": "number",
+                  "minimum": 0.01
+                },
+                "yaw": {
+                  "default": 0,
+                  "type": "number"
+                },
+                "pitch": {
+                  "default": 20,
+                  "type": "number",
+                  "minimum": -89,
+                  "maximum": 89
+                },
+                "halfLife": {
+                  "description": "Position smoothing half-life",
+                  "default": 0.08,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "mouseControl": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "sensitivity": {
+                  "description": "Degrees per pixel of mouse movement",
+                  "default": 0.25,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "minDistance": {
+                  "default": 2,
+                  "type": "number",
+                  "minimum": 0.01
+                },
+                "maxDistance": {
+                  "default": 40,
+                  "type": "number",
+                  "minimum": 0.01
+                },
+                "zoomSpeed": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false,
+              "description": "Orbits the camera around a target entity at a fixed distance. The standard third-person / inspection camera."
+            },
+            "Rigidbody3D": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "default": "dynamic",
+                  "type": "string",
+                  "enum": [
+                    "dynamic",
+                    "kinematic",
+                    "static"
+                  ]
+                },
+                "velocity": {
+                  "description": "World units per second",
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "angularVelocity": {
+                  "description": "Euler degrees per second. Visual only — collision shapes stay axis-aligned.",
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "mass": {
+                  "default": 1,
+                  "type": "number",
+                  "minimum": 0.0001
+                },
+                "gravityScale": {
+                  "description": "0 disables gravity for this body",
+                  "default": 1,
+                  "type": "number"
+                },
+                "linearDamping": {
+                  "description": "Velocity lost per second",
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "freezeX": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "freezeY": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "freezeZ": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "grounded": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "canSleep": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "sleeping": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "sleepTimer": {
+                  "default": 0,
+                  "type": "number"
+                }
+              },
+              "additionalProperties": false,
+              "description": "Makes an entity move under the 3D solver.\n  dynamic   — moved by forces and collisions\n  kinematic — moved by your code, pushes dynamics, is never pushed back\n  static    — never moves; cheapest, and static/static pairs are skipped\n\nAngular dynamics are deliberately not simulated: with AABB and sphere colliders there is no inertia tensor worth the name, and a tumbling box whose collider stays axis-aligned looks worse than one that does not tumble. Set `angularVelocity` to spin something visually; it will not affect collision."
+            },
+            "BoxCollider3D": {
+              "type": "object",
+              "properties": {
+                "size": {
+                  "description": "Full extents in world units",
+                  "default": [
+                    1,
+                    1,
+                    1
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "offset": {
+                  "description": "Local offset from the entity origin",
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "isTrigger": {
+                  "description": "Detect overlaps but never push",
+                  "default": false,
+                  "type": "boolean"
+                },
+                "restitution": {
+                  "description": "Bounciness",
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "friction": {
+                  "default": 0.3,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "layer": {
+                  "description": "Collision layer bit (1, 2, 4, 8, ...)",
+                  "default": 1,
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mask": {
+                  "description": "Bitmask of layers to collide with; -1 = all",
+                  "default": -1,
+                  "type": "integer"
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "An axis-aligned box collider. Entity rotation is ignored for collision — AABBs are what keep the broadphase cheap and the solver stable. Compose several boxes, or use a SphereCollider, when you need a rotated shape."
+            },
+            "SphereCollider": {
+              "type": "object",
+              "properties": {
+                "radius": {
+                  "default": 0.5,
+                  "type": "number",
+                  "minimum": 0.0001
+                },
+                "offset": {
+                  "default": [
+                    0,
+                    0,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "isTrigger": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "restitution": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "friction": {
+                  "default": 0.3,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "layer": {
+                  "default": 1,
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "mask": {
+                  "default": -1,
+                  "type": "integer"
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "A spherical collider. Cheapest shape, and the only one that rotates for free."
+            },
+            "Physics3DSettings": {
+              "type": "object",
+              "properties": {
+                "gravity": {
+                  "description": "World units per second squared",
+                  "default": [
+                    0,
+                    -20,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "iterations": {
+                  "description": "Solver iterations per step",
+                  "default": 8,
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 64
+                },
+                "correctionPercent": {
+                  "default": 0.8,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "slop": {
+                  "description": "Overlap left unresolved, to stop jitter",
+                  "default": 0.01,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "sleepVelocity": {
+                  "default": 0.05,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "sleepTime": {
+                  "default": 0.5,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "cellSize": {
+                  "description": "Broadphase grid cell size",
+                  "default": 2,
+                  "type": "number",
+                  "minimum": 0.1
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                }
+              },
+              "additionalProperties": false,
+              "description": "World-level 3D physics configuration. Created automatically from the scene's `settings.physics3d` block; you rarely add it by hand."
+            },
+            "CharacterController3D": {
+              "type": "object",
+              "properties": {
+                "maxSlopeAngle": {
+                  "description": "Degrees",
+                  "default": 50,
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 89
+                },
+                "groundProbe": {
+                  "default": 0.12,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "grounded": {
+                  "default": false,
+                  "type": "boolean"
+                },
+                "airTime": {
+                  "default": 0,
+                  "type": "number",
+                  "minimum": 0
+                },
+                "groundNormal": {
+                  "default": [
+                    0,
+                    1,
+                    0
+                  ],
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "description": "Marks a body as a walking character and holds its movement state. The FirstPersonController and ThirdPersonController behaviors read and write this, so both share one definition of \"is this thing on the ground\"."
+            }
+          },
+          "additionalProperties": false
+        },
+        "behaviors": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "TopDownController",
+                    "description": "Eight-way movement driven by the moveX/moveY input actions. No gravity."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "speed": {
+                        "description": "World units per second",
+                        "default": 5,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "acceleration": {
+                        "description": "0 means instant",
+                        "default": 0,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "moveXAction": {
+                        "default": "moveX",
+                        "type": "string"
+                      },
+                      "moveYAction": {
+                        "default": "moveY",
+                        "type": "string"
+                      },
+                      "faceMovement": {
+                        "description": "Rotate to face travel direction",
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "speed": {
+                    "description": "World units per second",
+                    "default": 5,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "acceleration": {
+                    "description": "0 means instant",
+                    "default": 0,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "moveXAction": {
+                    "default": "moveX",
+                    "type": "string"
+                  },
+                  "moveYAction": {
+                    "default": "moveY",
+                    "type": "string"
+                  },
+                  "faceMovement": {
+                    "description": "Rotate to face travel direction",
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "PlatformerController",
+                    "description": "Side-scrolling movement with jumping, coyote time and jump buffering. Requires a Rigidbody and a collider; reads the moveX and jump actions."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "speed": {
+                        "default": 6,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "acceleration": {
+                        "description": "Ground acceleration",
+                        "default": 60,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "airAcceleration": {
+                        "default": 25,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "jumpHeight": {
+                        "description": "Peak height in world units",
+                        "default": 3,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "fallMultiplier": {
+                        "default": 1.8,
+                        "type": "number",
+                        "minimum": 1
+                      },
+                      "lowJumpMultiplier": {
+                        "default": 2.5,
+                        "type": "number",
+                        "minimum": 1
+                      },
+                      "coyoteTime": {
+                        "description": "Grace period after leaving a ledge",
+                        "default": 0.1,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "jumpBuffer": {
+                        "description": "Grace period for an early jump press",
+                        "default": 0.12,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "maxJumps": {
+                        "description": "2 gives a double jump",
+                        "default": 1,
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "moveAction": {
+                        "default": "moveX",
+                        "type": "string"
+                      },
+                      "jumpAction": {
+                        "default": "jump",
+                        "type": "string"
+                      },
+                      "flipSprite": {
+                        "default": true,
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "speed": {
+                    "default": 6,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "acceleration": {
+                    "description": "Ground acceleration",
+                    "default": 60,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "airAcceleration": {
+                    "default": 25,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "jumpHeight": {
+                    "description": "Peak height in world units",
+                    "default": 3,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "fallMultiplier": {
+                    "default": 1.8,
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "lowJumpMultiplier": {
+                    "default": 2.5,
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "coyoteTime": {
+                    "description": "Grace period after leaving a ledge",
+                    "default": 0.1,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "jumpBuffer": {
+                    "description": "Grace period for an early jump press",
+                    "default": 0.12,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "maxJumps": {
+                    "description": "2 gives a double jump",
+                    "default": 1,
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "moveAction": {
+                    "default": "moveX",
+                    "type": "string"
+                  },
+                  "jumpAction": {
+                    "default": "jump",
+                    "type": "string"
+                  },
+                  "flipSprite": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Patrol",
+                    "description": "Moves back and forth between two points, turning at each end."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "axis": {
+                        "default": "x",
+                        "type": "string",
+                        "enum": [
+                          "x",
+                          "y"
+                        ]
+                      },
+                      "distance": {
+                        "description": "Half-range from the start position",
+                        "default": 3,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "speed": {
+                        "default": 2,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "startDirection": {
+                        "default": 1,
+                        "type": "integer"
+                      },
+                      "flipSprite": {
+                        "default": true,
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "axis": {
+                    "default": "x",
+                    "type": "string",
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "distance": {
+                    "description": "Half-range from the start position",
+                    "default": 3,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "speed": {
+                    "default": 2,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "startDirection": {
+                    "default": 1,
+                    "type": "integer"
+                  },
+                  "flipSprite": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Spin",
+                    "description": "Rotates the entity at a constant rate. Mostly for pickups and effects."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "degreesPerSecond": {
+                        "default": 90,
+                        "type": "number"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "degreesPerSecond": {
+                    "default": 90,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Oscillate",
+                    "description": "Moves the entity along a sine wave around its starting position."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "axis": {
+                        "default": "y",
+                        "type": "string",
+                        "enum": [
+                          "x",
+                          "y"
+                        ]
+                      },
+                      "amplitude": {
+                        "default": 0.5,
+                        "type": "number"
+                      },
+                      "frequency": {
+                        "description": "Cycles per second",
+                        "default": 1,
+                        "type": "number"
+                      },
+                      "phase": {
+                        "description": "Offset in cycles, 0..1",
+                        "default": 0,
+                        "type": "number"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "axis": {
+                    "default": "y",
+                    "type": "string",
+                    "enum": [
+                      "x",
+                      "y"
+                    ]
+                  },
+                  "amplitude": {
+                    "default": 0.5,
+                    "type": "number"
+                  },
+                  "frequency": {
+                    "description": "Cycles per second",
+                    "default": 1,
+                    "type": "number"
+                  },
+                  "phase": {
+                    "description": "Offset in cycles, 0..1",
+                    "default": 0,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "DestroyOnTrigger",
+                    "description": "Destroys an entity when something with a matching tag enters its trigger. The usual way to build coins, spikes and kill zones without writing code."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "tag": {
+                        "description": "Required tag on the other entity; empty means any",
+                        "default": "",
+                        "type": "string"
+                      },
+                      "destroy": {
+                        "description": "Which entity to destroy",
+                        "default": "self",
+                        "type": "string",
+                        "enum": [
+                          "self",
+                          "other",
+                          "both"
+                        ]
+                      },
+                      "sound": {
+                        "type": "string",
+                        "description": "(audio id)"
+                      },
+                      "event": {
+                        "description": "Optional world event to queue on trigger",
+                        "default": "",
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "tag": {
+                    "description": "Required tag on the other entity; empty means any",
+                    "default": "",
+                    "type": "string"
+                  },
+                  "destroy": {
+                    "description": "Which entity to destroy",
+                    "default": "self",
+                    "type": "string",
+                    "enum": [
+                      "self",
+                      "other",
+                      "both"
+                    ]
+                  },
+                  "sound": {
+                    "type": "string",
+                    "description": "(audio id)"
+                  },
+                  "event": {
+                    "description": "Optional world event to queue on trigger",
+                    "default": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Spawner",
+                    "description": "Spawns a prefab on an interval. Spawned entities inherit the spawner position."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "prefab": {
+                        "description": "Prefab name from the scene file",
+                        "type": "string"
+                      },
+                      "interval": {
+                        "description": "Seconds between spawns",
+                        "default": 1,
+                        "type": "number",
+                        "minimum": 0.01
+                      },
+                      "maxAlive": {
+                        "description": "0 means unlimited",
+                        "default": 0,
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "limit": {
+                        "description": "Total spawns before stopping; 0 = unlimited",
+                        "default": 0,
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "spread": {
+                        "description": "Random position offset range",
+                        "default": [
+                          0,
+                          0
+                        ],
+                        "oneOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 2,
+                            "maxItems": 2
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "velocity": {
+                        "description": "Initial velocity, if the prefab has a Rigidbody",
+                        "default": [
+                          0,
+                          0
+                        ],
+                        "oneOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 2,
+                            "maxItems": 2
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "tag": {
+                        "description": "Tag applied to each spawned entity",
+                        "default": "",
+                        "type": "string"
+                      },
+                      "autoStart": {
+                        "default": true,
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "prefab"
+                    ]
+                  },
+                  "prefab": {
+                    "description": "Prefab name from the scene file",
+                    "type": "string"
+                  },
+                  "interval": {
+                    "description": "Seconds between spawns",
+                    "default": 1,
+                    "type": "number",
+                    "minimum": 0.01
+                  },
+                  "maxAlive": {
+                    "description": "0 means unlimited",
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "limit": {
+                    "description": "Total spawns before stopping; 0 = unlimited",
+                    "default": 0,
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "spread": {
+                    "description": "Random position offset range",
+                    "default": [
+                      0,
+                      0
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "velocity": {
+                    "description": "Initial velocity, if the prefab has a Rigidbody",
+                    "default": [
+                      0,
+                      0
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "tag": {
+                    "description": "Tag applied to each spawned entity",
+                    "default": "",
+                    "type": "string"
+                  },
+                  "autoStart": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "KillY",
+                    "description": "Destroys the entity once it falls below (or rises above) a y threshold."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "y": {
+                        "default": -20,
+                        "type": "number"
+                      },
+                      "direction": {
+                        "default": "below",
+                        "type": "string",
+                        "enum": [
+                          "below",
+                          "above"
+                        ]
+                      },
+                      "event": {
+                        "description": "Optional event to queue instead of destroying",
+                        "default": "",
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "y": {
+                    "default": -20,
+                    "type": "number"
+                  },
+                  "direction": {
+                    "default": "below",
+                    "type": "string",
+                    "enum": [
+                      "below",
+                      "above"
+                    ]
+                  },
+                  "event": {
+                    "description": "Optional event to queue instead of destroying",
+                    "default": "",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "MouseAim",
+                    "description": "Rotates the entity to face the mouse cursor."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "offset": {
+                        "description": "Extra rotation in degrees",
+                        "default": 0,
+                        "type": "number"
+                      },
+                      "turnSpeed": {
+                        "description": "Degrees/sec; 0 snaps instantly",
+                        "default": 0,
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "offset": {
+                    "description": "Extra rotation in degrees",
+                    "default": 0,
+                    "type": "number"
+                  },
+                  "turnSpeed": {
+                    "description": "Degrees/sec; 0 snaps instantly",
+                    "default": 0,
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "GroundCheck",
+                    "description": "Raycasts downward and writes the result to Rigidbody.grounded. Use it when a character needs reliable ground detection on slopes or moving platforms, where contact normals alone can flicker."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "distance": {
+                        "description": "How far below the collider to probe",
+                        "default": 0.1,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "mask": {
+                        "description": "Collision layer bitmask",
+                        "default": -1,
+                        "type": "integer"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "distance": {
+                    "description": "How far below the collider to probe",
+                    "default": 0.1,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "mask": {
+                    "description": "Collision layer bitmask",
+                    "default": -1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "SmoothFollow",
+                    "description": "Follows a target entity with exponential smoothing. Frame-rate independent."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "target": {
+                        "description": "Scene id of the entity to follow (entity id)",
+                        "type": "string"
+                      },
+                      "offset": {
+                        "default": [
+                          0,
+                          0
+                        ],
+                        "oneOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 2,
+                            "maxItems": 2
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "halfLife": {
+                        "default": 0.15,
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "target": {
+                    "description": "Scene id of the entity to follow (entity id)",
+                    "type": "string"
+                  },
+                  "offset": {
+                    "default": [
+                      0,
+                      0
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "halfLife": {
+                    "default": 0.15,
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "FirstPersonController",
+                    "description": "Mouse-look plus WASD movement on a capsule-ish body. Put it on the entity that carries the Camera3D, or on a body with the camera as a child."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "speed": {
+                        "default": 6,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "sprintMultiplier": {
+                        "default": 1.6,
+                        "type": "number",
+                        "minimum": 1
+                      },
+                      "acceleration": {
+                        "description": "Ground acceleration",
+                        "default": 60,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "airAcceleration": {
+                        "default": 12,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "jumpHeight": {
+                        "description": "Peak height in world units",
+                        "default": 1.4,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "coyoteTime": {
+                        "default": 0.1,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "jumpBuffer": {
+                        "default": 0.12,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "lookSensitivity": {
+                        "description": "Degrees per pixel",
+                        "default": 0.15,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "requireMouseDown": {
+                        "default": true,
+                        "type": "boolean"
+                      },
+                      "maxPitch": {
+                        "default": 85,
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 89
+                      },
+                      "moveXAction": {
+                        "default": "moveX",
+                        "type": "string"
+                      },
+                      "moveYAction": {
+                        "default": "moveY",
+                        "type": "string"
+                      },
+                      "jumpAction": {
+                        "default": "jump",
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "speed": {
+                    "default": 6,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "sprintMultiplier": {
+                    "default": 1.6,
+                    "type": "number",
+                    "minimum": 1
+                  },
+                  "acceleration": {
+                    "description": "Ground acceleration",
+                    "default": 60,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "airAcceleration": {
+                    "default": 12,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "jumpHeight": {
+                    "description": "Peak height in world units",
+                    "default": 1.4,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "coyoteTime": {
+                    "default": 0.1,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "jumpBuffer": {
+                    "default": 0.12,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "lookSensitivity": {
+                    "description": "Degrees per pixel",
+                    "default": 0.15,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "requireMouseDown": {
+                    "default": true,
+                    "type": "boolean"
+                  },
+                  "maxPitch": {
+                    "default": 85,
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 89
+                  },
+                  "moveXAction": {
+                    "default": "moveX",
+                    "type": "string"
+                  },
+                  "moveYAction": {
+                    "default": "moveY",
+                    "type": "string"
+                  },
+                  "jumpAction": {
+                    "default": "jump",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "ThirdPersonController",
+                    "description": "Moves a character relative to the active camera and turns it to face travel. Pair with a CameraOrbit camera targeting the same entity."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "speed": {
+                        "default": 6,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "acceleration": {
+                        "default": 45,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "airAcceleration": {
+                        "default": 10,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "jumpHeight": {
+                        "default": 1.6,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "turnHalfLife": {
+                        "description": "Facing smoothing",
+                        "default": 0.06,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "coyoteTime": {
+                        "default": 0.1,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "moveXAction": {
+                        "default": "moveX",
+                        "type": "string"
+                      },
+                      "moveYAction": {
+                        "default": "moveY",
+                        "type": "string"
+                      },
+                      "jumpAction": {
+                        "default": "jump",
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "speed": {
+                    "default": 6,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "acceleration": {
+                    "default": 45,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "airAcceleration": {
+                    "default": 10,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "jumpHeight": {
+                    "default": 1.6,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "turnHalfLife": {
+                    "description": "Facing smoothing",
+                    "default": 0.06,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "coyoteTime": {
+                    "default": 0.1,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "moveXAction": {
+                    "default": "moveX",
+                    "type": "string"
+                  },
+                  "moveYAction": {
+                    "default": "moveY",
+                    "type": "string"
+                  },
+                  "jumpAction": {
+                    "default": "jump",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "LookAt3D",
+                    "description": "Rotates the entity to face a target entity every frame."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "target": {
+                        "description": "Scene id of the entity to face (entity id)",
+                        "type": "string"
+                      },
+                      "offset": {
+                        "default": [
+                          0,
+                          0,
+                          0
+                        ],
+                        "oneOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              },
+                              "z": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y",
+                              "z"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "flat": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "target": {
+                    "description": "Scene id of the entity to face (entity id)",
+                    "type": "string"
+                  },
+                  "offset": {
+                    "default": [
+                      0,
+                      0,
+                      0
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          },
+                          "z": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y",
+                          "z"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "flat": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Spin3D",
+                    "description": "Rotates the entity at a constant rate around each axis."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "degreesPerSecond": {
+                        "default": [
+                          0,
+                          90,
+                          0
+                        ],
+                        "oneOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              },
+                              "z": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y",
+                              "z"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "degreesPerSecond": {
+                    "default": [
+                      0,
+                      90,
+                      0
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          },
+                          "z": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y",
+                          "z"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Hover3D",
+                    "description": "Bobs the entity up and down around its starting height."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "amplitude": {
+                        "default": 0.25,
+                        "type": "number"
+                      },
+                      "frequency": {
+                        "description": "Cycles per second",
+                        "default": 1,
+                        "type": "number"
+                      },
+                      "phase": {
+                        "description": "Offset in cycles, 0..1",
+                        "default": 0,
+                        "type": "number"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "amplitude": {
+                    "default": 0.25,
+                    "type": "number"
+                  },
+                  "frequency": {
+                    "description": "Cycles per second",
+                    "default": 1,
+                    "type": "number"
+                  },
+                  "phase": {
+                    "description": "Offset in cycles, 0..1",
+                    "default": 0,
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Patrol3D",
+                    "description": "Moves back and forth between two points along one axis."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "axis": {
+                        "default": "x",
+                        "type": "string",
+                        "enum": [
+                          "x",
+                          "y",
+                          "z"
+                        ]
+                      },
+                      "distance": {
+                        "description": "Half-range from the start",
+                        "default": 4,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "speed": {
+                        "default": 2,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "startDirection": {
+                        "default": 1,
+                        "type": "integer"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "axis": {
+                    "default": "x",
+                    "type": "string",
+                    "enum": [
+                      "x",
+                      "y",
+                      "z"
+                    ]
+                  },
+                  "distance": {
+                    "description": "Half-range from the start",
+                    "default": 4,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "speed": {
+                    "default": 2,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "startDirection": {
+                    "default": 1,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "KillPlaneY",
+                    "description": "Fires an event, or destroys the entity, once it falls below a height."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "y": {
+                        "default": -20,
+                        "type": "number"
+                      },
+                      "event": {
+                        "description": "Event to queue instead of destroying",
+                        "default": "",
+                        "type": "string"
+                      },
+                      "respawn": {
+                        "default": false,
+                        "type": "boolean"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "y": {
+                    "default": -20,
+                    "type": "number"
+                  },
+                  "event": {
+                    "description": "Event to queue instead of destroying",
+                    "default": "",
+                    "type": "string"
+                  },
+                  "respawn": {
+                    "default": false,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Collect3D",
+                    "description": "Destroys this entity when a tagged entity enters its trigger, optionally firing an event. The 3D counterpart of DestroyOnTrigger."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "tag": {
+                        "description": "Required tag on the other entity",
+                        "default": "player",
+                        "type": "string"
+                      },
+                      "event": {
+                        "description": "World event to queue on pickup",
+                        "default": "",
+                        "type": "string"
+                      },
+                      "sound": {
+                        "type": "string",
+                        "description": "(audio id)"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "tag": {
+                    "description": "Required tag on the other entity",
+                    "default": "player",
+                    "type": "string"
+                  },
+                  "event": {
+                    "description": "World event to queue on pickup",
+                    "default": "",
+                    "type": "string"
+                  },
+                  "sound": {
+                    "type": "string",
+                    "description": "(audio id)"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "const": "Shooter3D",
+                    "description": "Spawns a projectile prefab along the entity's forward direction."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "props": {
+                    "type": "object",
+                    "properties": {
+                      "prefab": {
+                        "default": "Projectile",
+                        "type": "string"
+                      },
+                      "cooldown": {
+                        "default": 0.25,
+                        "type": "number",
+                        "minimum": 0.01
+                      },
+                      "speed": {
+                        "default": 20,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "muzzleOffset": {
+                        "description": "Local spawn offset",
+                        "default": [
+                          0,
+                          0,
+                          -0.8
+                        ],
+                        "oneOf": [
+                          {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "x": {
+                                "type": "number"
+                              },
+                              "y": {
+                                "type": "number"
+                              },
+                              "z": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "x",
+                              "y",
+                              "z"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "action": {
+                        "default": "fire",
+                        "type": "string"
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "prefab": {
+                    "default": "Projectile",
+                    "type": "string"
+                  },
+                  "cooldown": {
+                    "default": 0.25,
+                    "type": "number",
+                    "minimum": 0.01
+                  },
+                  "speed": {
+                    "default": 20,
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "muzzleOffset": {
+                    "description": "Local spawn offset",
+                    "default": [
+                      0,
+                      0,
+                      -0.8
+                    ],
+                    "oneOf": [
+                      {
+                        "type": "array",
+                        "items": {
+                          "type": "number"
+                        },
+                        "minItems": 3,
+                        "maxItems": 3
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "x": {
+                            "type": "number"
+                          },
+                          "y": {
+                            "type": "number"
+                          },
+                          "z": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "x",
+                          "y",
+                          "z"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ]
+                  },
+                  "action": {
+                    "default": "fire",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              }
+            ]
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entity"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

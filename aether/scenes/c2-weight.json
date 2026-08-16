@@ -1,0 +1,208 @@
+{
+  "$schema": "../schemas/scene.schema.json",
+  "name": "c2-weight",
+  "settings": {
+    "gravity3d": [0, -24, 0],
+    "seed": "aether-c2",
+    "physics3d": { "iterations": 12 },
+    "skybox": { "top": "#1b2a55", "bottom": "#05070f", "horizon": 0.42 }
+  },
+
+  "prefabs": {
+    "Rock": {
+      "name": "바위",
+      "tags": ["law"],
+      "components": {
+        "Transform3D": {},
+        "MeshRenderer": { "mesh": "sphere", "size": [1.1, 1.1, 1.1], "color": "#aab4d6" },
+        "Rigidbody3D": { "type": "dynamic", "mass": 6, "linearDamping": 0.1 },
+        "SphereCollider": { "radius": 0.55, "friction": 0.2, "restitution": 0.1 },
+        "LawTarget": { "label": "바위", "kind": "rock" }
+      }
+    }
+  },
+
+  "entities": [
+    { "id": "manager", "name": "Chamber",
+      "components": { "Transform3D": {} },
+      "behaviors": [
+        { "type": "LawWorld" },
+        { "type": "Chamber",
+          "title": "검증 1 · 무게의 방",
+          "objective": "장벽 너머로 넘어가라. 방법은 최소 세 가지, 정답은 알려주지 않는다.",
+          "test": "검증 1 — 무게 능력만으로 재미있는가 / 검증 4 — 정답을 몰라도 풀 수 있는가",
+          "abilities": "weight",
+          "hint1": "무게 증가 Z+Q+좌클릭 · 무게 감소 Z+Q+우클릭 · 나 자신 Z+Q+Shift",
+          "hint2": "가벼워진 물체는 떠오른다. 그 위에 올라탈 수도 있다.",
+          "hint3": "무거워진 것은 부순다. 바닥에 금이 간 곳이 있다.",
+          "next": "c3-inertia" }
+      ] },
+
+    { "id": "camera", "name": "Camera",
+      "components": {
+        "Transform3D": { "position": [0, 9, 22] },
+        "Camera3D": { "fov": 58, "far": 320, "background": "#05070f", "fogDensity": 0.0075, "fogColor": "#0b1122" }
+      },
+      "behaviors": [ { "type": "LawCamera", "target": "player", "distance": 12, "pitch": 24 } ] },
+
+    { "id": "sun", "components": { "Transform3D": { "rotation": [-52, 28, 0] },
+        "Light": { "type": "directional", "color": "#ffe9c8", "intensity": 1.35 } } },
+    { "id": "fill", "components": { "Transform3D": {},
+        "Light": { "type": "ambient", "color": "#7d94d6", "intensity": 0.44 } } },
+
+    { "id": "player", "name": "여행자", "tags": ["player"],
+      "components": {
+        "Transform3D": { "position": [0, 1.6, 12] },
+        "MeshRenderer": { "mesh": "box", "size": [0.8, 1.7, 0.8], "color": "#d3e3ff", "emissive": 0.12 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 3 },
+        "BoxCollider3D": { "size": [0.8, 1.7, 0.8], "friction": 0.08 },
+        "LawTarget": { "label": "여행자", "kind": "player", "grabbable": false }
+      },
+      "behaviors": [ { "type": "AetherPlayer" }, { "type": "LawDevice" } ] },
+
+    { "id": "floor-front", "name": "바닥", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [0, -0.5, 4] },
+        "MeshRenderer": { "mesh": "box", "size": [24, 1, 28], "color": "#3f4870" },
+        "BoxCollider3D": { "size": [24, 1, 28], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "floor-hole-a", "name": "바닥", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [-6, -0.5, -14] },
+        "MeshRenderer": { "mesh": "box", "size": [12, 1, 8], "color": "#3f4870" },
+        "BoxCollider3D": { "size": [12, 1, 8], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "floor-hole-b", "name": "바닥", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [9, -0.5, -14] },
+        "MeshRenderer": { "mesh": "box", "size": [6, 1, 8], "color": "#3f4870" },
+        "BoxCollider3D": { "size": [6, 1, 8], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "floor-back", "name": "바닥", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [0, -0.5, -26] },
+        "MeshRenderer": { "mesh": "box", "size": [24, 1, 16], "color": "#3f4870" },
+        "BoxCollider3D": { "size": [24, 1, 16], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+
+    { "id": "crack", "name": "균열 바닥",
+      "components": {
+        "Transform3D": { "position": [3, -0.5, -14] },
+        "MeshRenderer": { "mesh": "box", "size": [6, 1, 8], "color": "#4a4258", "emissive": 0.06 },
+        "BoxCollider3D": { "size": [6, 1, 8], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" },
+        "Breakable": { "threshold": 300, "label": "균열 바닥" }
+      },
+      "behaviors": [ { "type": "BreakableWall" } ] },
+
+    { "id": "tunnel-floor", "name": "지하 통로", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [3, -5.5, -20] },
+        "MeshRenderer": { "mesh": "box", "size": [8, 1, 22], "color": "#232a44" },
+        "BoxCollider3D": { "size": [8, 1, 22], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "tunnel-step1", "name": "계단",
+      "components": {
+        "Transform3D": { "position": [3, -4.2, -28] },
+        "MeshRenderer": { "mesh": "box", "size": [6, 1.6, 3], "color": "#2b3350" },
+        "BoxCollider3D": { "size": [6, 1.6, 3], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "tunnel-step2", "name": "계단",
+      "components": {
+        "Transform3D": { "position": [3, -2.6, -30.5] },
+        "MeshRenderer": { "mesh": "box", "size": [6, 1.6, 3], "color": "#2b3350" },
+        "BoxCollider3D": { "size": [6, 1.6, 3], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "tunnel-step3", "name": "계단",
+      "components": {
+        "Transform3D": { "position": [3, -1, -33] },
+        "MeshRenderer": { "mesh": "box", "size": [6, 1.6, 3], "color": "#2b3350" },
+        "BoxCollider3D": { "size": [6, 1.6, 3], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "floor-exit", "name": "출구 바닥", "tags": ["ground"],
+      "components": {
+        "Transform3D": { "position": [0, -0.5, -38] },
+        "MeshRenderer": { "mesh": "box", "size": [24, 1, 10], "color": "#3f4870" },
+        "BoxCollider3D": { "size": [24, 1, 10], "friction": 0.7 },
+        "Rigidbody3D": { "type": "static" }
+      } },
+
+    { "id": "wall-l", "components": {
+        "Transform3D": { "position": [-12.5, 3, -8] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 12, 64], "color": "#2f3760" },
+        "BoxCollider3D": { "size": [1, 12, 64] },
+        "Rigidbody3D": { "type": "static" } } },
+    { "id": "wall-r", "components": {
+        "Transform3D": { "position": [12.5, 3, -8] },
+        "MeshRenderer": { "mesh": "box", "size": [1, 12, 64], "color": "#2f3760" },
+        "BoxCollider3D": { "size": [1, 12, 64] },
+        "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "barrier", "name": "장벽",
+      "components": {
+        "Transform3D": { "position": [-2.5, 2.5, -20] },
+        "MeshRenderer": { "mesh": "box", "size": [19, 5, 1.6], "color": "#3a4265", "shininess": 0.3 },
+        "BoxCollider3D": { "size": [19, 5, 1.6] },
+        "Rigidbody3D": { "type": "static" }
+      } },
+    { "id": "barrier-r", "name": "장벽",
+      "components": {
+        "Transform3D": { "position": [10.5, 2.5, -20] },
+        "MeshRenderer": { "mesh": "box", "size": [3, 5, 1.6], "color": "#3a4265" },
+        "BoxCollider3D": { "size": [3, 5, 1.6] },
+        "Rigidbody3D": { "type": "static" }
+      } },
+
+    { "id": "gate", "name": "문",
+      "components": {
+        "Transform3D": { "position": [8, 1.6, -20] },
+        "MeshRenderer": { "mesh": "box", "size": [2, 3.2, 1.2], "color": "#6d7aac", "shininess": 0.4 },
+        "BoxCollider3D": { "size": [2, 3.2, 1.2] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [ { "type": "SlideDoor", "openOffset": [0, -3.4, 0], "speed": 0.8 } ] },
+    { "id": "gate-top", "components": {
+        "Transform3D": { "position": [8, 4.1, -20] },
+        "MeshRenderer": { "mesh": "box", "size": [2, 1.8, 1.6], "color": "#3a4265" },
+        "BoxCollider3D": { "size": [2, 1.8, 1.6] },
+        "Rigidbody3D": { "type": "static" } } },
+
+    { "id": "plate", "name": "압력판",
+      "components": {
+        "Transform3D": { "position": [-7, 0.12, -4] },
+        "MeshRenderer": { "mesh": "box", "size": [3.2, 0.25, 3.2], "color": "#6d7ba6", "emissive": 0.12 },
+        "BoxCollider3D": { "size": [3.2, 0.25, 3.2] },
+        "Rigidbody3D": { "type": "static" }
+      },
+      "behaviors": [ { "type": "PressurePlate", "need": 40, "target": "gate", "radius": 2 } ] },
+
+    { "id": "crate", "name": "상자", "tags": ["law"],
+      "components": {
+        "Transform3D": { "position": [-7, 1, -17] },
+        "MeshRenderer": { "mesh": "box", "size": [1.8, 1.8, 1.8], "color": "#b39468", "shininess": 0.1 },
+        "Rigidbody3D": { "type": "dynamic", "mass": 12 },
+        "BoxCollider3D": { "size": [1.8, 1.8, 1.8], "friction": 0.55 },
+        "LawTarget": { "label": "상자", "kind": "crate" }
+      } },
+
+    { "prefab": "Rock", "id": "rock-1", "components": { "Transform3D": { "position": [-4, 1.2, 2] } } },
+    { "prefab": "Rock", "id": "rock-2", "components": { "Transform3D": { "position": [5, 1.2, 0] } } },
+    { "prefab": "Rock", "id": "rock-3", "components": { "Transform3D": { "position": [6.4, 1.2, 2] } } },
+
+    { "id": "goal", "name": "출구",
+      "components": {
+        "Transform3D": { "position": [0, 1.4, -40] },
+        "MeshRenderer": { "mesh": "box", "size": [3, 3, 0.4], "color": "#7dffb0", "emissive": 0.75, "opacity": 0.55 },
+        "SphereCollider": { "radius": 1.6, "isTrigger": true }
+      },
+      "behaviors": [ { "type": "ChamberGoal", "radius": 2.2 } ] }
+  ]
+}

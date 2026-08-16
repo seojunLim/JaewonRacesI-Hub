@@ -1,0 +1,42 @@
+{
+  "name": "aether-z",
+  "version": "0.1.0",
+  "engine": "0.1.0",
+  "scenes": [
+    "scenes/c1-awakening.json",
+    "scenes/c2-weight.json",
+    "scenes/c3-inertia.json",
+    "scenes/c4-combination.json",
+    "scenes/c5-phase.json",
+    "scenes/c6-combat.json",
+    "scenes/c7-boss.json",
+    "scenes/c8-sandbox.json"
+  ],
+  "scripts": [
+    "src/behaviors.js"
+  ],
+  "window": {
+    "width": 1280,
+    "height": 720,
+    "title": "에테르 Z+ : 세계의 법칙"
+  },
+  "renderer": "auto",
+  "input": {
+    "actions": {
+      "moveX": { "type": "axis", "positive": ["KeyD"], "negative": ["KeyA"], "gamepadAxis": "leftStickX", "description": "좌우 이동" },
+      "moveY": { "type": "axis", "positive": ["KeyW"], "negative": ["KeyS"], "gamepadAxis": "leftStickY", "description": "전후 이동" },
+      "camX": { "type": "axis", "positive": ["ArrowRight"], "negative": ["ArrowLeft"], "gamepadAxis": "rightStickX", "description": "카메라 회전" },
+      "camY": { "type": "axis", "positive": ["ArrowUp"], "negative": ["ArrowDown"], "gamepadAxis": "rightStickY", "description": "카메라 상하" },
+      "jump": { "type": "button", "keys": ["Space", "Gamepad0"], "description": "점프" },
+      "dash": { "type": "button", "keys": ["ShiftLeft", "ShiftRight", "Gamepad1"], "description": "회피 / 법칙 모드에서는 4번째 능력" },
+      "fire": { "type": "button", "keys": ["Mouse0", "Gamepad2"], "description": "기본 공격 / 법칙 모드에서는 1번째 능력" },
+      "aim": { "type": "button", "keys": ["Mouse2", "Gamepad3"], "description": "법칙 모드에서 2번째 능력" },
+      "law": { "type": "button", "keys": ["KeyZ", "Gamepad6"], "description": "법칙 조작 모드 (누르고 있기)" },
+      "lawWeight": { "type": "button", "keys": ["KeyQ"], "description": "무게 계열" },
+      "lawPhase": { "type": "button", "keys": ["KeyE"], "description": "위상 계열 / 3번째 능력" },
+      "lawInertia": { "type": "button", "keys": ["KeyR"], "description": "관성 계열" },
+      "restart": { "type": "button", "keys": ["Backspace"], "description": "챔버 재시작" },
+      "pause": { "type": "button", "keys": ["Escape"], "description": "메뉴" }
+    }
+  }
+}
