@@ -111,6 +111,15 @@
   .btn.go:hover{background:#55e87d}
   .btn:focus-visible, a:focus-visible, video:focus-visible{outline:3px solid var(--sky); outline-offset:3px}
   .meta{margin-top:10px; font-size:11.5px; color:#7d8ba0; font-family:'Galmuri9',monospace; text-align:center}
+  .tabs{display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap}
+  .tab{
+    font-family:'Galmuri11',sans-serif; font-size:13.5px; padding:9px 16px;
+    border:1px solid var(--line); border-radius:5px; background:#1b2434;
+    color:#7d8ba0; cursor:pointer; transition:background .18s ease, color .18s ease;
+  }
+  .tab:hover{background:#243044; color:var(--text)}
+  .tab.is-on{background:var(--beam); border-color:var(--beam); color:#0b2412}
+  .tab:focus-visible{outline:3px solid var(--sky); outline-offset:3px}
   .card .warnline{
     font-size:12.5px; color:#e0b978; line-height:1.7; margin-bottom:16px;
     padding-left:11px; border-left:2px solid rgba(224,185,120,.5);
@@ -195,13 +204,27 @@
 
   <section style="border-top:none">
     <h2>트레일러</h2>
-    <div class="trailer">
+
+    <div class="tabs" role="tablist" aria-label="트레일러 선택">
+      <button class="tab is-on" role="tab" id="tab-t2" aria-controls="panel-t2" aria-selected="true" data-target="panel-t2">2차 트레일러</button>
+      <button class="tab" role="tab" id="tab-t1" aria-controls="panel-t1" aria-selected="false" data-target="panel-t1">1차 트레일러</button>
+    </div>
+
+    <div class="trailer" id="panel-t2" role="tabpanel" aria-labelledby="tab-t2">
+      <video controls playsinline preload="none" poster="trailer2-poster.jpg" style="display:block; width:100%; height:auto; aspect-ratio:16/9; background:#000; border:1px solid var(--line); border-radius:6px">
+        <source src="trailer2.mp4" type="video/mp4">
+        영상이 안 나오면 <a href="trailer2.mp4">여기서 받아서</a> 보세요.
+      </video>
+      <p class="meta" style="margin-top:12px">1분, 소리 납니다. 게렌과의 통화를 통째로 넣었습니다</p>
+    </div>
+
+    <div class="trailer" id="panel-t1" role="tabpanel" aria-labelledby="tab-t1" hidden>
       <video controls playsinline preload="none" poster="trailer-poster.jpg" style="display:block; width:100%; height:auto; aspect-ratio:16/9; background:#000; border:1px solid var(--line); border-radius:6px">
         <source src="trailer.mp4" type="video/mp4">
         영상이 안 나오면 <a href="trailer.mp4">여기서 받아서</a> 보세요.
       </video>
+      <p class="meta" style="margin-top:12px">1분 33초, 소리 납니다. 처음에 올렸던 영상입니다</p>
     </div>
-    <p class="meta" style="margin-top:12px">1분 33초, 소리 납니다</p>
   </section>
 
   <section>
@@ -319,6 +342,28 @@
       }
     });
   }).catch(function(){});
+})();
+</script>
+<script>
+(function(){
+  var tabs = document.querySelectorAll('.tab');
+  function show(id){
+    tabs.forEach(function(t){
+      var on = t.dataset.target === id;
+      t.classList.toggle('is-on', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      var panel = document.getElementById(t.dataset.target);
+      if(!panel) return;
+      panel.hidden = !on;
+      if(!on){
+        var v = panel.querySelector('video');
+        if(v) v.pause();
+      }
+    });
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){ show(t.dataset.target); });
+  });
 })();
 </script>
 </body>
