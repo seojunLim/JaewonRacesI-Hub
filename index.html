@@ -206,11 +206,20 @@
     <h2>트레일러</h2>
 
     <div class="tabs" role="tablist" aria-label="트레일러 선택">
-      <button class="tab is-on" role="tab" id="tab-t2" aria-controls="panel-t2" aria-selected="true" data-target="panel-t2">2차 트레일러</button>
+      <button class="tab is-on" role="tab" id="tab-t3" aria-controls="panel-t3" aria-selected="true" data-target="panel-t3">3차 트레일러</button>
+      <button class="tab" role="tab" id="tab-t2" aria-controls="panel-t2" aria-selected="false" data-target="panel-t2">2차 트레일러</button>
       <button class="tab" role="tab" id="tab-t1" aria-controls="panel-t1" aria-selected="false" data-target="panel-t1">1차 트레일러</button>
     </div>
 
-    <div class="trailer" id="panel-t2" role="tabpanel" aria-labelledby="tab-t2">
+    <div class="trailer" id="panel-t3" role="tabpanel" aria-labelledby="tab-t3">
+      <video controls playsinline preload="none" poster="trailer3-poster.jpg" style="display:block; width:100%; height:auto; aspect-ratio:16/9; background:#000; border:1px solid var(--line); border-radius:6px">
+        <source src="trailer3.mp4" type="video/mp4">
+        영상이 안 나오면 <a href="trailer3.mp4">여기서 받아서</a> 보세요.
+      </video>
+      <p class="meta" style="margin-top:12px">약 36초, 소리 납니다. 난이도마다 스테이지 수가 다릅니다</p>
+    </div>
+
+    <div class="trailer" id="panel-t2" role="tabpanel" aria-labelledby="tab-t2" hidden>
       <video controls playsinline preload="none" poster="trailer2-poster.jpg" style="display:block; width:100%; height:auto; aspect-ratio:16/9; background:#000; border:1px solid var(--line); border-radius:6px">
         <source src="trailer2.mp4" type="video/mp4">
         영상이 안 나오면 <a href="trailer2.mp4">여기서 받아서</a> 보세요.
