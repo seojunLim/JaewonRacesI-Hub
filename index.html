@@ -206,12 +206,21 @@
     <h2>트레일러</h2>
 
     <div class="tabs" role="tablist" aria-label="트레일러 선택">
-      <button class="tab is-on" role="tab" id="tab-t3" aria-controls="panel-t3" aria-selected="true" data-target="panel-t3">3차 트레일러</button>
+      <button class="tab is-on" role="tab" id="tab-demo" aria-controls="panel-demo" aria-selected="true" data-target="panel-demo">실제 시연</button>
+      <button class="tab" role="tab" id="tab-t3" aria-controls="panel-t3" aria-selected="false" data-target="panel-t3">3차 트레일러</button>
       <button class="tab" role="tab" id="tab-t2" aria-controls="panel-t2" aria-selected="false" data-target="panel-t2">2차 트레일러</button>
       <button class="tab" role="tab" id="tab-t1" aria-controls="panel-t1" aria-selected="false" data-target="panel-t1">1차 트레일러</button>
     </div>
 
-    <div class="trailer" id="panel-t3" role="tabpanel" aria-labelledby="tab-t3">
+    <div class="trailer" id="panel-demo" role="tabpanel" aria-labelledby="tab-demo">
+      <video controls playsinline preload="none" poster="demo-poster.jpg" style="display:block; width:100%; height:auto; aspect-ratio:16/9; background:#000; border:1px solid var(--line); border-radius:6px">
+        <source src="demo.mp4" type="video/mp4">
+        영상이 안 나오면 <a href="demo.mp4">여기서 받아서</a> 보세요.
+      </video>
+      <p class="meta" style="margin-top:12px">약 1분 20초, 소리 납니다. 받기부터 설치, 자동 업데이트, 실제 플레이까지 그대로 찍었습니다</p>
+    </div>
+
+    <div class="trailer" id="panel-t3" role="tabpanel" aria-labelledby="tab-t3" hidden>
       <video controls playsinline preload="none" poster="trailer3-poster.jpg" style="display:block; width:100%; height:auto; aspect-ratio:16/9; background:#000; border:1px solid var(--line); border-radius:6px">
         <source src="trailer3.mp4" type="video/mp4">
         영상이 안 나오면 <a href="trailer3.mp4">여기서 받아서</a> 보세요.
